@@ -13,6 +13,7 @@ F_TEC    = DATA_DIR / "tecnicos.json"
 F_CAR    = DATA_DIR / "carpetas.json"
 F_PLT    = DATA_DIR / "plantillas.json"
 F_HIST   = DATA_DIR / "historial.json"
+F_PROG   = DATA_DIR / "prog_historial.json"
 
 DATA_DIR.mkdir(exist_ok=True)
 IMG_DIR.mkdir(exist_ok=True)
@@ -37,7 +38,19 @@ def save_img(f, prefix, id_):
 def index(): return send_file("index.html")
 
 @app.route("/imagenes/<path:n>")
-def imagen(n): return send_from_directory(IMG_DIR, n)
+def imagen(n):
+    for base in (IMG_DIR, Path("imagenes"), Path("imagenes/jugadores"), Path("imagenes/tecnicos"), Path("imagenes/escudos")):
+        if (base / n).exists():
+            return send_from_directory(base, n)
+    return send_from_directory(IMG_DIR, n)
+
+@app.route("/api/escudos")
+def get_escudos():
+    d = Path("imagenes/escudos")
+    if not d.exists(): return jsonify([])
+    ext = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+    return jsonify([{"nombre": f.stem, "url": f"/imagenes/escudos/{f.name}"}
+        for f in sorted(d.iterdir()) if f.suffix.lower() in ext])
 
 # ── Jugadores ─────────────────────────────────────────────────────────────────
 @app.route("/api/jugadores", methods=["GET"])
@@ -107,18 +120,34 @@ def del_tec(tid):
     return jsonify({"ok": True})
 
 # ── Carpetas ──────────────────────────────────────────────────────────────────
+def norm_pot(d):
+    p = (d.get("potenciador") or "").strip()
+    pm = (d.get("potenciador_manual") or "").strip()
+    if p == "__manual__":
+        d["potenciador"] = pm if pm and pm != "__manual__" else ""
+    d.pop("potenciador_manual", None)
+    return d
+
 @app.route("/api/carpetas", methods=["GET"])
-def get_car(): return jsonify(leer(F_CAR))
+def get_car():
+    c = leer(F_CAR)
+    out, changed = [], False
+    for x in c:
+        n = norm_pot(dict(x))
+        if n != x: changed = True
+        out.append(n)
+    if changed: guardar(F_CAR, out)
+    return jsonify(out)
 
 @app.route("/api/carpetas", methods=["POST"])
 def post_car():
-    d = request.form.to_dict(); d["id"] = str(uuid.uuid4())[:8]
+    d = norm_pot(request.form.to_dict()); d["id"] = str(uuid.uuid4())[:8]
     c = leer(F_CAR); c.append(d); guardar(F_CAR, c)
     return jsonify(d), 201
 
 @app.route("/api/carpetas/<cid>", methods=["PUT"])
 def put_car(cid):
-    d = request.form.to_dict(); d["id"] = cid
+    d = norm_pot(request.form.to_dict()); d["id"] = cid
     c = leer(F_CAR)
     for i, x in enumerate(c):
         if x["id"] == cid: c[i] = d; guardar(F_CAR, c); return jsonify(d)
@@ -132,6 +161,21 @@ def del_car(cid):
 # ── Historial de stats ────────────────────────────────────────────────────────
 @app.route("/api/historial/<jid>", methods=["GET"])
 def get_hist(jid): return jsonify(leer_d(F_HIST).get(jid, []))
+
+# ── Historial de progresión ───────────────────────────────────────────────────
+@app.route("/api/prog_historial/<jid>", methods=["GET"])
+def get_prog_hist(jid): return jsonify(leer_d(F_PROG).get(jid, []))
+
+@app.route("/api/prog_historial/<jid>", methods=["POST"])
+def post_prog_hist(jid):
+    snap = request.json or {}
+    snap["_ts"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    hist = leer_d(F_PROG)
+    if jid not in hist: hist[jid] = []
+    hist[jid].insert(0, snap)
+    hist[jid] = hist[jid][:30]
+    guardar(F_PROG, hist)
+    return jsonify(snap), 201
 
 # ── Plantillas ────────────────────────────────────────────────────────────────
 @app.route("/api/plantillas/<tid>", methods=["GET"])

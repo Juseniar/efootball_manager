@@ -1,0 +1,5 @@
+{"sessionId":"704da5","location":"index.html:cargar","message":"carpetas loaded","data":{"count":3,"pots":[]},"timestamp":1780973818648,"hypothesisId":"H3","runId":"post-fix"}
+{"sessionId":"704da5","location":"index.html:verJugador","message":"historial loaded","data":{"id":"f113bca8","histLen":15,"progLen":2},"timestamp":1780973853954,"hypothesisId":"H1","runId":"post-fix"}
+{"sessionId":"704da5","location":"index.html:verJugador","message":"historial loaded","data":{"id":"f113bca8","histLen":15,"progLen":2},"timestamp":1780973864897,"hypothesisId":"H1","runId":"post-fix"}
+{"sessionId":"704da5","location":"index.html:verJugador","message":"historial loaded","data":{"id":"f113bca8","histLen":15,"progLen":2},"timestamp":1780973878665,"hypothesisId":"H1","runId":"post-fix"}
+{"sessionId":"704da5","location":"index.html:verJugador","message":"historial loaded","data":{"id":"f113bca8","histLen":15,"progLen":2},"timestamp":1780973892958,"hypothesisId":"H1","runId":"post-fix"}
