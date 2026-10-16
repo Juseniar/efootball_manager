@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f0b429">
+  <title>eFootball Manager — Acceso</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+    :root {
+      --oro: #f0b429;
+      --oro2: #e09a00;
+      --negro: #080a0f;
+      --oscuro: #0e1218;
+      --card: #141820;
+      --borde: #1e2535;
+      --texto: #e8eaf0;
+      --apagado: #5a6475;
+      --muted: #3a4255;
+      --verde: #10b981;
+      --rojo: #ef4444;
+    }
+
+    body {
+      font-family: Inter, sans-serif;
+      background: var(--negro);
+      color: var(--texto);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Fondo animado */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(240,180,41,.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(37,99,235,.08) 0%, transparent 60%),
+        #080a0f;
+      z-index: 0;
+    }
+    .bg-field {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: .04;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,.5) 60px, rgba(255,255,255,.5) 61px),
+        repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,.5) 60px, rgba(255,255,255,.5) 61px);
+    }
+
+    /* Partículas decorativas */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: flotar linear infinite;
+      z-index: 0;
+    }
+    @keyframes flotar {
+      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: .3; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+
+    /* Contenedor principal */
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* Logo */
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo-emoji {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 10px auto;
+      filter: drop-shadow(0 0 20px rgba(240,180,41,.4));
+      animation: pulso 2.5s ease-in-out infinite;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    @keyframes pulso {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(240,180,41,.4)); }
+      50% { transform: scale(1.06); filter: drop-shadow(0 0 35px rgba(240,180,41,.7)); }
+    }
+    .logo-titulo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      letter-spacing: .08em;
+      color: var(--oro);
+      line-height: 1;
+    }
+    .logo-sub {
+      color: var(--apagado);
+      font-size: .82rem;
+      margin-top: 4px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--borde);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+    }
+
+    /* Tabs login/registro */
+    .tabs-auth {
+      display: flex;
+      background: var(--oscuro);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .tab-auth {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--apagado);
+      font-family: Inter, sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-auth.activo {
+      background: var(--card);
+      color: var(--texto);
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+
+    /* Formulario */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--apagado);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--oscuro);
+      border: 1.5px solid var(--borde);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--texto);
+      font-family: Inter, sans-serif;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-input:focus {
+      border-color: var(--oro);
+      box-shadow: 0 0 0 3px rgba(240,180,41,.12);
+    }
+    .form-input::placeholder { color: var(--apagado) }
+
+    /* Botón submit */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--oro), var(--oro2));
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-family: Inter, sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+      box-shadow: 0 4px 20px rgba(240,180,41,.3);
+      letter-spacing: .02em;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(240,180,41,.45);
+    }
+    .btn-submit:active { transform: translateY(0) }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none }
+
+    /* Mensaje de error/éxito */
+    .msg {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: .83rem;
+      font-weight: 600;
+      margin-top: 14px;
+      display: none;
+      text-align: center;
+    }
+    .msg.error {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.3);
+      color: var(--rojo);
+    }
+    .msg.exito {
+      background: rgba(16,185,129,.12);
+      border: 1px solid rgba(16,185,129,.3);
+      color: var(--verde);
+    }
+
+    /* Footer */
+    .footer-text {
+      text-align: center;
+      color: var(--apagado);
+      font-size: .72rem;
+      margin-top: 20px;
+    }
+
+    /* Panel oculto */
+    .panel { display: none }
+    .panel.activo { display: block }
+
+    /* Animación entrada card */
+    @keyframes cardEntrar {
+      0%   { opacity: 0; transform: translateY(30px) scale(.96) }
+      100% { opacity: 1; transform: none }
+    }
+    .card { animation: cardEntrar .5s cubic-bezier(.22,.68,0,1.15) both }
+
+    /* --- MODO CLARO --- */
+    body.modo-claro {
+      --negro: #f8fafc;
+      --oscuro: #e2e8f0;
+      --card: #ffffff;
+      --borde: #cbd5e1;
+      --texto: #0f1623;
+      --apagado: #64748b;
+      --muted: #94a3b8;
+    }
+    body.modo-claro .bg {
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(240,180,41,.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(37,99,235,.15) 0%, transparent 60%),
+        #f8fafc;
+    }
+    body.modo-claro .bg-field {
+      opacity: .08;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(0,0,0,.3) 60px, rgba(0,0,0,.3) 61px),
+        repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(0,0,0,.3) 60px, rgba(0,0,0,.3) 61px);
+    }
+    body.modo-claro .tab-auth.activo {
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    body.modo-claro .card {
+      box-shadow: 0 24px 80px rgba(0,0,0,.15);
+    }
+    .btn-modo {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--card);
+      border: 1px solid var(--borde);
+      color: var(--texto);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      transition: all .2s;
+    }
+    .btn-modo:hover {
+      transform: scale(1.1);
+      border-color: var(--oro);
+    }
+    body.modo-claro .btn-modo {
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+  </style>
+</head>
+<body>
+  <button class="btn-modo" id="modo-btn" onclick="toggleModo()">🌙</button>
+  <script>
+    try { 
+      if (localStorage.getItem('efm_modo') === 'claro') {
+        document.body.classList.add('modo-claro');
+        document.getElementById('modo-btn').textContent = '☀️';
+      }
+    } catch(e){}
+  </script>
+  <div class="bg"></div>
+  <div class="bg-field"></div>
+
+  <div class="container">
+    <div class="logo-wrap">
+      <img id="logo-escudo" class="logo-emoji" src="" alt="⚽">
+      <div class="logo-titulo">eFootball Manager</div>
+      <div class="logo-sub">Tu gestor de plantillas profesional</div>
+    </div>
+
+    <div class="card">
+      <div class="tabs-auth">
+        <button class="tab-auth activo" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
+        <button class="tab-auth" id="tab-registro" onclick="switchTab('registro')">Crear cuenta</button>
+        <button class="tab-auth" id="tab-recuperar" onclick="switchTab('recuperar')">🔑 Recuperar</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="panel activo" id="panel-login">
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input class="form-input" id="l-user" type="text" placeholder="tu_usuario"
+            autocomplete="username" autocapitalize="none" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="l-pass" type="password" placeholder="••••••••"
+            autocomplete="current-password">
+        </div>
+        <button class="btn-submit" id="l-btn" onclick="doLogin()">⚽ Entrar</button>
+        <div class="msg" id="l-msg"></div>
+      </div>
+
+      <!-- REGISTRO -->
+      <div class="panel" id="panel-registro">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" id="r-nombre" type="text" placeholder="Tu nombre"
+            autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input class="form-input" id="r-user" type="text" placeholder="mi_usuario (mín. 3 caracteres)"
+            autocomplete="username" autocapitalize="none" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="r-pass" type="password" placeholder="•••••••• (mín. 4 caracteres)"
+            autocomplete="new-password">
+        </div>
+        <button class="btn-submit" id="r-btn" onclick="doRegistro()">🚀 Crear cuenta</button>
+        <div class="msg" id="r-msg"></div>
+      </div>
+
+      <!-- RECUPERAR CONTRASEÑA -->
+      <div class="panel" id="panel-recuperar">
+        <div id="rec-paso1">
+          <div class="form-group">
+            <label class="form-label">Usuario</label>
+            <input class="form-input" id="rec-user" type="text" placeholder="tu_usuario"
+              autocapitalize="none" spellcheck="false">
+          </div>
+          <button class="btn-submit" onclick="buscarPregunta()">Buscar pregunta →</button>
+          <div class="msg" id="rec-msg1"></div>
+        </div>
+        <div id="rec-paso2" style="display:none">
+          <div class="form-group">
+            <label class="form-label" style="color:var(--oro)">🔐 Pregunta de seguridad</label>
+            <div id="rec-pregunta-txt" style="background:var(--oscuro);border:1px solid var(--borde);border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:2px"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tu respuesta</label>
+            <input class="form-input" id="rec-resp" type="text" placeholder="Responde aquí...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nueva contraseña</label>
+            <input class="form-input" id="rec-newpwd" type="password" placeholder="•••••••• (mín. 4 caracteres)">
+          </div>
+          <button class="btn-submit" onclick="doRecuperar()">✅ Cambiar contraseña</button>
+          <div class="msg" id="rec-msg2"></div>
+          <button onclick="resetRecuperar()" style="background:none;border:none;color:var(--apagado);font-size:.78rem;cursor:pointer;margin-top:10px;width:100%">← Volver</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-text">eFootball Manager · Datos guardados localmente</div>
+  </div>
+
+  <script>
+    function toggleModo() {
+      const claro = document.body.classList.toggle('modo-claro');
+      const btn = document.getElementById('modo-btn');
+      if (btn) btn.textContent = claro ? '☀️' : '🌙';
+      try { localStorage.setItem('efm_modo', claro ? 'claro' : 'oscuro'); } catch (e) { }
+    }
+
+    // Si hay sesión activa y se llega aquí por "atrás", redirigir al dashboard
+    window.addEventListener('pageshow', e => {
+      if (e.persisted) {
+        fetch('/api/me', { cache: 'no-store' })
+          .then(r => { if (r.ok) window.location.replace('/'); })
+          .catch(() => {});
+      }
+    });
+
+    // Lógica para escudos dinámicos
+    let escudosDisponibles = [];
+    const logoEscudo = document.getElementById('logo-escudo');
+
+    async function cargarEscudos() {
+      try {
+        const r = await fetch('/api/escudos');
+        const data = await r.json();
+        if (data && data.length > 0) {
+          escudosDisponibles = data;
+          cambiarEscudo();
+        } else {
+          // Fallback a un icono genérico o dejar el alt '⚽'
+          logoEscudo.style.display = 'none';
+        }
+      } catch (e) { console.error("Error cargando escudos:", e); }
+    }
+
+    function cambiarEscudo() {
+      if (escudosDisponibles.length === 0) return;
+      // Seleccionar uno al azar
+      const idx = Math.floor(Math.random() * escudosDisponibles.length);
+      logoEscudo.src = escudosDisponibles[idx].url;
+    }
+
+    logoEscudo.addEventListener('mouseenter', cambiarEscudo);
+    cargarEscudos();
+
+    // Partículas decorativas
+    const emojis = ['⚽','🥅','🏆','⭐','🎯','👟'];
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 20 + 14;
+      p.style.cssText = `
+        left: ${Math.random()*100}%;
+        width: ${size}px; height: ${size}px;
+        font-size: ${size * .85}px;
+        animation-duration: ${Math.random()*18+12}s;
+        animation-delay: ${Math.random()*12}s;
+        display:flex;align-items:center;justify-content:center;
+        background:transparent;
+      `;
+      p.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      document.body.appendChild(p);
+    }
+
+    function switchTab(t) {
+      ['login','registro','recuperar'].forEach(id => {
+        document.getElementById('panel-' + id).classList.toggle('activo', t === id);
+        document.getElementById('tab-' + id).classList.toggle('activo', t === id);
+      });
+    }
+
+    function resetRecuperar() {
+      document.getElementById('rec-paso1').style.display = 'block';
+      document.getElementById('rec-paso2').style.display = 'none';
+      document.getElementById('rec-user').value = '';
+      document.getElementById('rec-msg1').style.display = 'none';
+    }
+
+    async function buscarPregunta() {
+      const user = document.getElementById('rec-user').value.trim();
+      if (!user) { mostrarMsg('rec-msg1', 'Ingresa tu usuario', 'error'); return; }
+      try {
+        const r = await fetch('/api/pregunta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          document.getElementById('rec-pregunta-txt').textContent = d.pregunta;
+          document.getElementById('rec-paso1').style.display = 'none';
+          document.getElementById('rec-paso2').style.display = 'block';
+        } else {
+          mostrarMsg('rec-msg1', d.error || 'Error', 'error');
+        }
+      } catch { mostrarMsg('rec-msg1', 'Error de conexión', 'error'); }
+    }
+
+    async function doRecuperar() {
+      const user = document.getElementById('rec-user').value.trim();
+      const resp = document.getElementById('rec-resp').value.trim();
+      const pwd  = document.getElementById('rec-newpwd').value;
+      if (!resp) { mostrarMsg('rec-msg2', 'Ingresa tu respuesta', 'error'); return; }
+      if (pwd.length < 4) { mostrarMsg('rec-msg2', 'Mínimo 4 caracteres', 'error'); return; }
+      try {
+        const r = await fetch('/api/recuperar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, respuesta: resp, nueva_pwd: pwd })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          mostrarMsg('rec-msg2', '✅ Contraseña cambiada. Inicia sesión.', 'exito');
+          setTimeout(() => { resetRecuperar(); switchTab('login'); }, 2000);
+        } else {
+          mostrarMsg('rec-msg2', d.error || 'Error', 'error');
+        }
+      } catch { mostrarMsg('rec-msg2', 'Error de conexión', 'error'); }
+    }
+
+    function mostrarMsg(id, txt, tipo) {
+      const el = document.getElementById(id);
+      el.textContent = txt;
+      el.className = 'msg ' + tipo;
+      el.style.display = 'block';
+    }
+
+    async function doLogin() {
+      const btn = document.getElementById('l-btn');
+      const user = document.getElementById('l-user').value.trim();
+      const pass = document.getElementById('l-pass').value;
+      if (!user || !pass) { mostrarMsg('l-msg','Completa todos los campos','error'); return; }
+      btn.disabled = true; btn.textContent = 'Entrando...';
+      try {
+        const r = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          mostrarMsg('l-msg', '✅ Bienvenido ' + d.nombre, 'exito');
+          setTimeout(() => window.location.href = '/', 600);
+        } else {
+          mostrarMsg('l-msg', d.error || 'Error al iniciar sesión', 'error');
+          btn.disabled = false; btn.textContent = '⚽ Entrar';
+        }
+      } catch {
+        mostrarMsg('l-msg', 'Error de conexión con el servidor', 'error');
+        btn.disabled = false; btn.textContent = '⚽ Entrar';
+      }
+    }
+
+    async function doRegistro() {
+      const btn = document.getElementById('r-btn');
+      const nombre = document.getElementById('r-nombre').value.trim();
+      const user   = document.getElementById('r-user').value.trim();
+      const pass   = document.getElementById('r-pass').value;
+      if (!user || !pass) { mostrarMsg('r-msg','Completa todos los campos','error'); return; }
+      btn.disabled = true; btn.textContent = 'Creando cuenta...';
+      try {
+        const r = await fetch('/api/registro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass, nombre: nombre || user })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          mostrarMsg('r-msg', '✅ Cuenta creada. Entrando...', 'exito');
+          setTimeout(() => window.location.href = '/', 600);
+        } else {
+          mostrarMsg('r-msg', d.error || 'Error al crear cuenta', 'error');
+          btn.disabled = false; btn.textContent = '🚀 Crear cuenta';
+        }
+      } catch {
+        mostrarMsg('r-msg', 'Error de conexión con el servidor', 'error');
+        btn.disabled = false; btn.textContent = '🚀 Crear cuenta';
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const loginActivo = document.getElementById('panel-login').classList.contains('activo');
+      if (loginActivo) doLogin(); else doRegistro();
+    });
+  </script>
+</body>
+</html>

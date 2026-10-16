@@ -1,0 +1,1601 @@
+{
+  "test": [
+    {
+      "prog_tiros": 5,
+      "_ts": "2026-06-08T21:37:07"
+    }
+  ],
+  "f113bca8": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:10:06"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:35:08"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:34:30"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:34:18"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:34:07"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T15:39:57"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T15:39:19"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T15:07:47"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T15:06:41"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-08T21:40:32"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 6,
+      "prog_dribles": 4,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-08T21:39:33"
+    }
+  ],
+  "6b7980d2": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 12,
+      "prog_f_aerea": 0,
+      "prog_defensa": 2,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:11:06"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 12,
+      "prog_f_aerea": 0,
+      "prog_defensa": 2,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T13:39:23"
+    }
+  ],
+  "7d625e54": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 8,
+      "prog_defensa": 15,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-25T10:41:56"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 8,
+      "prog_defensa": 15,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:11:41"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 8,
+      "prog_defensa": 15,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:08:06"
+    }
+  ],
+  "01f1eee3": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 11,
+      "prog_dribles": 8,
+      "prog_destreza": 7,
+      "prog_tren": 11,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:12:10"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 11,
+      "prog_dribles": 8,
+      "prog_destreza": 7,
+      "prog_tren": 11,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:57:57"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 11,
+      "prog_dribles": 8,
+      "prog_destreza": 7,
+      "prog_tren": 11,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:10:01"
+    }
+  ],
+  "ad9a377a": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:12:45"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:56:58"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:11:35"
+    }
+  ],
+  "65afdf3e": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:13:15"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:56:33"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:13:25"
+    }
+  ],
+  "e7c00e0f": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 9,
+      "prog_tren": 8,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:13:44"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 9,
+      "prog_tren": 8,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-19T22:55:41"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 9,
+      "prog_tren": 8,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:15:24"
+    }
+  ],
+  "3a6fd6cc": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 13,
+      "prog_destreza": 1,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:14:26"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 13,
+      "prog_destreza": 1,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:18:00"
+    }
+  ],
+  "09824ace": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 9,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:14:47"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 9,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:19:34"
+    }
+  ],
+  "b0157628": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 10,
+      "prog_destreza": 4,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:15:12"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 10,
+      "prog_destreza": 4,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:21:57"
+    }
+  ],
+  "21c26e0a": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 4,
+      "prog_destreza": 5,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:15:38"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 4,
+      "prog_destreza": 5,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:49:20"
+    }
+  ],
+  "c5c829b0": [
+    {
+      "prog_tiros": 5,
+      "prog_pases": 4,
+      "prog_dribles": 13,
+      "prog_destreza": 6,
+      "prog_tren": 9,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:16:07"
+    },
+    {
+      "prog_tiros": 5,
+      "prog_pases": 4,
+      "prog_dribles": 13,
+      "prog_destreza": 6,
+      "prog_tren": 9,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:52:43"
+    }
+  ],
+  "cee88a0a": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 10,
+      "prog_pt2": 10,
+      "prog_pt3": 8,
+      "_ts": "2026-06-20T01:16:37"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 10,
+      "prog_pt2": 10,
+      "prog_pt3": 8,
+      "_ts": "2026-06-13T23:41:26"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 10,
+      "prog_pt2": 9,
+      "prog_pt3": 9,
+      "_ts": "2026-06-13T16:55:00"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 10,
+      "prog_pt2": 9,
+      "prog_pt3": 9,
+      "_ts": "2026-06-13T16:54:39"
+    }
+  ],
+  "55a95d5a": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 13,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:08:10"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 13,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:55:52"
+    }
+  ],
+  "c267e502": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 10,
+      "prog_dribles": 9,
+      "prog_destreza": 7,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:09:42"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 10,
+      "prog_dribles": 9,
+      "prog_destreza": 7,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:56:12"
+    }
+  ],
+  "f2bd9086": [
+    {
+      "prog_tiros": 9,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 9,
+      "prog_tren": 11,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:16:57"
+    },
+    {
+      "prog_tiros": 9,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 9,
+      "prog_tren": 11,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T16:59:30"
+    }
+  ],
+  "db3f4843": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 11,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:17:21"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 8,
+      "prog_tren": 11,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:01:00"
+    }
+  ],
+  "3d48e90a": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 11,
+      "prog_destreza": 9,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:17:47"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 11,
+      "prog_destreza": 9,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:03:11"
+    }
+  ],
+  "4d88f19c": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 9,
+      "prog_pt2": 12,
+      "prog_pt3": 11,
+      "_ts": "2026-06-20T01:18:09"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 2,
+      "prog_defensa": 0,
+      "prog_pt1": 9,
+      "prog_pt2": 12,
+      "prog_pt3": 11,
+      "_ts": "2026-06-13T17:08:34"
+    }
+  ],
+  "306f9235": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 6,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:18:50"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 6,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:11:40"
+    }
+  ],
+  "2bd91547": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:19:12"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:13:39"
+    }
+  ],
+  "74c37b25": [
+    {
+      "prog_tiros": 1,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:19:36"
+    },
+    {
+      "prog_tiros": 1,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 9,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:16:16"
+    }
+  ],
+  "f73a5a63": [
+    {
+      "prog_tiros": 11,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:19:56"
+    },
+    {
+      "prog_tiros": 11,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:20:08"
+    }
+  ],
+  "253fe42a": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 4,
+      "prog_f_aerea": 4,
+      "prog_defensa": 20,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:20:24"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 4,
+      "prog_f_aerea": 4,
+      "prog_defensa": 20,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:23:03"
+    }
+  ],
+  "31498c8c": [
+    {
+      "prog_tiros": 9,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:21:03"
+    },
+    {
+      "prog_tiros": 9,
+      "prog_pases": 1,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:26:36"
+    }
+  ],
+  "c6f5bad2": [
+    {
+      "prog_tiros": 8,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:21:32"
+    },
+    {
+      "prog_tiros": 8,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:32:46"
+    }
+  ],
+  "56c0e1a1": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:21:59"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 4,
+      "prog_dribles": 12,
+      "prog_destreza": 10,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:35:15"
+    }
+  ],
+  "5d8c07d8": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 13,
+      "prog_dribles": 10,
+      "prog_destreza": 5,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:22:24"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 13,
+      "prog_dribles": 10,
+      "prog_destreza": 5,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:37:54"
+    }
+  ],
+  "40884843": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 5,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:23:08"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 5,
+      "prog_defensa": 16,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:39:52"
+    }
+  ],
+  "2075c77e": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:23:28"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:42:51"
+    }
+  ],
+  "552d1e5d": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 10,
+      "prog_destreza": 10,
+      "prog_tren": 4,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:23:52"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 10,
+      "prog_destreza": 10,
+      "prog_tren": 4,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:44:29"
+    }
+  ],
+  "0754fe36": [
+    {
+      "prog_tiros": 1,
+      "prog_pases": 9,
+      "prog_dribles": 4,
+      "prog_destreza": 6,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:24:15"
+    },
+    {
+      "prog_tiros": 1,
+      "prog_pases": 9,
+      "prog_dribles": 4,
+      "prog_destreza": 6,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:46:14"
+    }
+  ],
+  "2ea3d3fa": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 2,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:24:39"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 2,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:47:46"
+    }
+  ],
+  "b7f15d4a": [
+    {
+      "prog_tiros": 1,
+      "prog_pases": 4,
+      "prog_dribles": 7,
+      "prog_destreza": 9,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:25:00"
+    },
+    {
+      "prog_tiros": 1,
+      "prog_pases": 4,
+      "prog_dribles": 7,
+      "prog_destreza": 9,
+      "prog_tren": 14,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:49:41"
+    }
+  ],
+  "ecb84d0d": [
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 12,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:25:19"
+    },
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 12,
+      "prog_tren": 7,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:51:32"
+    }
+  ],
+  "a5d17b2c": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 14,
+      "prog_destreza": 5,
+      "prog_tren": 6,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:25:46"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 12,
+      "prog_dribles": 14,
+      "prog_destreza": 5,
+      "prog_tren": 6,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:54:06"
+    }
+  ],
+  "dfb3b970": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 8,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:26:19"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 4,
+      "prog_tren": 4,
+      "prog_f_aerea": 8,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:56:39"
+    }
+  ],
+  "e7c85b69": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 4,
+      "prog_dribles": 0,
+      "prog_destreza": 6,
+      "prog_tren": 10,
+      "prog_f_aerea": 4,
+      "prog_defensa": 12,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:26:42"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 4,
+      "prog_dribles": 0,
+      "prog_destreza": 6,
+      "prog_tren": 10,
+      "prog_f_aerea": 4,
+      "prog_defensa": 12,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T17:58:40"
+    }
+  ],
+  "a1e26da4": [
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 9,
+      "prog_tren": 6,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:27:04"
+    },
+    {
+      "prog_tiros": 4,
+      "prog_pases": 8,
+      "prog_dribles": 8,
+      "prog_destreza": 9,
+      "prog_tren": 6,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:00:35"
+    }
+  ],
+  "16f16ec6": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 8,
+      "prog_dribles": 4,
+      "prog_destreza": 4,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:27:24"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 8,
+      "prog_dribles": 4,
+      "prog_destreza": 4,
+      "prog_tren": 8,
+      "prog_f_aerea": 0,
+      "prog_defensa": 14,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:02:41"
+    }
+  ],
+  "b4cb58dd": [
+    {
+      "prog_tiros": 14,
+      "prog_pases": 0,
+      "prog_dribles": 3,
+      "prog_destreza": 10,
+      "prog_tren": 6,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:27:42"
+    },
+    {
+      "prog_tiros": 14,
+      "prog_pases": 0,
+      "prog_dribles": 3,
+      "prog_destreza": 10,
+      "prog_tren": 6,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:04:17"
+    }
+  ],
+  "4c35ac3d": [
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 1,
+      "prog_destreza": 9,
+      "prog_tren": 12,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:28:04"
+    },
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 1,
+      "prog_destreza": 9,
+      "prog_tren": 12,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:06:02"
+    }
+  ],
+  "f6715666": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 12,
+      "prog_pt2": 9,
+      "prog_pt3": 10,
+      "_ts": "2026-06-20T01:28:33"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 12,
+      "prog_pt2": 9,
+      "prog_pt3": 10,
+      "_ts": "2026-06-13T18:10:30"
+    }
+  ],
+  "36cf2bd5": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 4,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:28:54"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 7,
+      "prog_f_aerea": 4,
+      "prog_defensa": 18,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:11:58"
+    }
+  ],
+  "4f32189b": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 8,
+      "prog_pt2": 8,
+      "prog_pt3": 14,
+      "_ts": "2026-06-20T01:29:22"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 0,
+      "prog_tren": 0,
+      "prog_f_aerea": 0,
+      "prog_defensa": 0,
+      "prog_pt1": 8,
+      "prog_pt2": 8,
+      "prog_pt3": 14,
+      "_ts": "2026-06-13T18:14:29"
+    }
+  ],
+  "ec8d3e64": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 11,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 8,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:29:47"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 11,
+      "prog_dribles": 12,
+      "prog_destreza": 8,
+      "prog_tren": 8,
+      "prog_f_aerea": 1,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T18:16:32"
+    }
+  ],
+  "32421f18": [
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:22:42"
+    },
+    {
+      "prog_tiros": 10,
+      "prog_pases": 0,
+      "prog_dribles": 4,
+      "prog_destreza": 12,
+      "prog_tren": 8,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-15T15:17:55"
+    },
+    {
+      "prog_tiros": 7,
+      "prog_pases": 0,
+      "prog_dribles": 0,
+      "prog_destreza": 8,
+      "prog_tren": 15,
+      "prog_f_aerea": 4,
+      "prog_defensa": 0,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T19:40:20"
+    }
+  ],
+  "7aaea0f3": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 1,
+      "prog_destreza": 4,
+      "prog_tren": 6,
+      "prog_f_aerea": 0,
+      "prog_defensa": 19,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:30:14"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 0,
+      "prog_dribles": 1,
+      "prog_destreza": 4,
+      "prog_tren": 6,
+      "prog_f_aerea": 0,
+      "prog_defensa": 19,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-13T19:41:50"
+    }
+  ],
+  "e241c708": [
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 4,
+      "prog_destreza": 8,
+      "prog_tren": 13,
+      "prog_f_aerea": 4,
+      "prog_defensa": 8,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-25T10:40:59"
+    },
+    {
+      "prog_tiros": 0,
+      "prog_pases": 5,
+      "prog_dribles": 4,
+      "prog_destreza": 8,
+      "prog_tren": 13,
+      "prog_f_aerea": 4,
+      "prog_defensa": 8,
+      "prog_pt1": 0,
+      "prog_pt2": 0,
+      "prog_pt3": 0,
+      "_ts": "2026-06-20T01:10:40"
+    }
+  ]
+}
