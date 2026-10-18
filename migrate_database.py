@@ -16,6 +16,7 @@ from models import (
     MigrationRecord,
     Player,
     ProgHistory,
+    SquadSnapshot,
     User,
     db,
 )
@@ -30,6 +31,7 @@ MODELS = (
     ProgHistory,
     Lineup,
     GoalTracker,
+    SquadSnapshot,
 )
 HISTORY_MODELS = (History, ProgHistory)
 

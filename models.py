@@ -74,6 +74,14 @@ class Lineup(db.Model):
     coach_id = db.Column(db.String(20), primary_key=True)
     data = db.Column(db.Text, nullable=False)
 
+class SquadSnapshot(db.Model):
+    __tablename__ = 'squad_snapshots'
+    id = db.Column(db.String(36), primary_key=True)
+    username = db.Column(db.String(80), db.ForeignKey('users.username'), nullable=False, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    data = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.String(50), nullable=False)
+
 class GoalTracker(db.Model):
     __tablename__ = 'goal_trackers'
     username = db.Column(db.String(80), db.ForeignKey('users.username'), primary_key=True)

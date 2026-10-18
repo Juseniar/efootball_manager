@@ -63,6 +63,10 @@ En Render, crea un Blueprint desde `render.yaml` y configura. El comando de inic
 - `SECRET_KEY` se genera automáticamente por Render.
 El disco persistente de Render conserva archivos subidos localmente mientras se termina la migración de imágenes. El endpoint `/api/health` valida que la API pueda consultar la base.
 
+La aplicación permite descargar un respaldo JSON por cuenta desde **Herramientas → Sincronización**. Incluye jugadores, técnicos, asignaciones, alineaciones, historiales, goleadores, versiones guardadas e imágenes de cuenta disponibles en el almacenamiento local o en el bucket configurado. No incluye credenciales de acceso. Al restaurarlo, reemplaza los datos de la cuenta actualmente autenticada; valida primero el archivo y conserva la cuenta y su contraseña. Las imágenes públicas externas o archivos que ya no existan se señalan como advertencia y conservan su referencia.
+
+Desde la misma pantalla puedes guardar, comparar, restaurar o borrar versiones de tu equipo. Dentro de la pizarra de un técnico, **Laboratorio** compara las alineaciones guardadas y señala posiciones débiles con alternativas de la carpeta; **Archivo** exporta una alineación junto con todos los jugadores asignados a la carpeta del técnico y los datos particulares de sus cartas, para compartirla o importarla en otra cuenta. El PNG de la pizarra sigue disponible.
+
 ## 5. Desplegar la interfaz en Netlify
 
 Conecta el repositorio a Netlify y configura la variable de entorno `FLASK_API_URL` con el origen HTTPS que Render asignó a la API, por ejemplo `https://efootball-manager-api.onrender.com`. Netlify construye la carpeta `dist` y enruta `/api/*` y `/imagenes/*` hacia Render.

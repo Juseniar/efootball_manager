@@ -1933,7 +1933,7 @@
       gap: 10px;
       margin-bottom: 12px;
       width: 100%;
-      max-width: 460px
+      max-width: 900px
     }
 
     .campo-titulo-text {
@@ -5554,7 +5554,9 @@
       border-radius: 20px;
       padding: 28px;
       width: 100%;
-      max-width: 480px;
+      max-width: 720px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
       animation: splEntrar .18s ease;
     }
 
@@ -8160,6 +8162,9 @@
           onclick="togglePizarra('${tid}')">✏️ Pizarra</button>
         <button class="btn-sm" style="background:#10b981;color:#fff"
           onclick="forzarMejor11('${tid}')">🌟 Mejor 11</button>
+        <button class="btn-sm" onclick="compararAlineaciones('${tid}')">⚖️ Laboratorio</button>
+        <button class="btn-sm" onclick="exportarAlineacionArchivo('${tid}')">📤 Archivo</button>
+        <button class="btn-sm" onclick="solicitarImportarAlineacion('${tid}')">📥 Importar</button>
         <button class="btn-sm btn-sm-oro"
           onclick="exportarPlantillaPng('${tid}')">📥 PNG</button>
         <button class="btn-sm" style="background:linear-gradient(135deg,#f0b429,#e09a00);color:#000;font-weight:700"
@@ -8196,6 +8201,7 @@
         </svg>
       </div>
       <p class="campo-hint">💡 Arrastra jugadores para reposicionarlos · ✏️ Pizarra para dibujar</p>
+      <div id="alineacion-lab" class="oculto" style="margin:14px 0;padding:16px;background:var(--card);border:1px solid var(--borde);border-radius:12px"></div>
     </div>`;
     }
 
@@ -8278,6 +8284,350 @@
         alineaciones: alineacionesPlantilla,
         alineacion_activa: alineacionActivaId
       });
+    }
+
+    function obtenerPlantillaJugador(tid, cid) {
+      const folder = carpetas.find(item => item.id === cid && item.tecnico_id === tid);
+      if (!folder) return null;
+      const player = jugadores.find(item => item.id === folder.jugador_id);
+      return player ? { ...player, ...folder, cid: folder.id } : null;
+    }
+
+    function resumenAlineacionLaboratorio(tid, alineacion) {
+      const coach = tecnicos.find(item => item.id === tid) || {};
+      const formacion = DEF_FORM[alineacion.formacion] ? alineacion.formacion : coach.formacion || '4-2-3-1';
+      const needed = DEF_FORM[formacion] || DEF_FORM['4-2-3-1'];
+      const available = carpetas
+        .filter(item => item.tecnico_id === tid)
+        .map(item => obtenerPlantillaJugador(tid, item.id))
+        .filter(Boolean);
+      const positions = Array.isArray(alineacion.posiciones) ? alineacion.posiciones : [];
+      const placed = positions.map(position => ({
+        ...position,
+        player: obtenerPlantillaJugador(tid, position.cid)
+      })).filter(position => position.player);
+      const valid = placed.filter(position =>
+        (COMPAT[position.pos] || [position.pos]).includes(position.player.posicion));
+      const overall = valid.map(position => parseInt(position.player.overall, 10) || 0).filter(Boolean);
+      const weak = [];
+      const unassigned = [...placed];
+      needed.flat().forEach(position => {
+        const occupyingIndex = unassigned.findIndex(entry => entry.pos === position);
+        const occupying = occupyingIndex >= 0 ? unassigned.splice(occupyingIndex, 1)[0] : null;
+        const eligible = available
+          .filter(player => (COMPAT[position] || [position]).includes(player.posicion))
+          .filter(player => !occupying || player.id !== occupying.player.id)
+          .sort((a, b) => (parseInt(b.overall, 10) || 0) - (parseInt(a.overall, 10) || 0));
+        if (!occupying || !(COMPAT[position] || [position]).includes(occupying.player.posicion)) {
+          weak.push({ position, reason: occupying ? 'fuera de posición' : 'sin titular', suggestions: eligible.slice(0, 3) });
+        } else if ((parseInt(occupying.player.overall, 10) || 0) < 80) {
+          weak.push({ position, reason: `OVR ${occupying.player.overall || '—'}`, suggestions: eligible.slice(0, 3) });
+        }
+      });
+      return {
+        name: alineacion.nombre,
+        formation: formacion,
+        count: placed.length,
+        valid: valid.length,
+        average: overall.length ? (overall.reduce((sum, value) => sum + value, 0) / overall.length).toFixed(1) : '—',
+        weak
+      };
+    }
+
+    function compararAlineaciones(tid) {
+      const panel = document.getElementById('alineacion-lab');
+      if (!panel) return;
+      if (!panel.classList.contains('oculto')) {
+        panel.classList.add('oculto');
+        return;
+      }
+      const summaries = alineacionesPlantilla.map(alignment =>
+        ({ alignment, summary: resumenAlineacionLaboratorio(tid, alignment) }));
+      const active = summaries.find(item => item.alignment.id === alineacionActivaId);
+      panel.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0;color:var(--oro)">🧪 Laboratorio de alineaciones</h3>
+            <div style="font-size:.74rem;color:var(--apagado);margin-top:4px">Compara tus variantes y revisa alternativas de los jugadores asignados a este técnico.</div>
+          </div>
+          <button class="btn-sm" onclick="document.getElementById('alineacion-lab').classList.add('oculto')">Cerrar</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+            <thead><tr style="color:var(--apagado);text-align:left">
+              <th style="padding:8px">Versión</th><th>Formación</th><th>Titulares</th><th>En posición</th><th>OVR medio</th><th>Alertas</th>
+            </tr></thead>
+            <tbody>${summaries.map(({ alignment, summary }) => `
+              <tr style="border-top:1px solid var(--borde);${alignment.id === alineacionActivaId ? 'color:var(--oro)' : ''}">
+                <td style="padding:9px 8px;font-weight:700">${escaparHtml(summary.name)}${alignment.id === alineacionActivaId ? ' · actual' : ''}</td>
+                <td>${escaparHtml(summary.formation)}</td>
+                <td>${summary.count}/11</td><td>${summary.valid}</td><td>${summary.average}</td>
+                <td>${summary.weak.length}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--oscuro);border-radius:9px">
+          <strong>Alternativas para ${escaparHtml(active?.summary.name || 'la alineación actual')}</strong>
+          ${active?.summary.weak.length ? `<div style="display:grid;gap:8px;margin-top:8px">${active.summary.weak.map(item => `
+            <div style="font-size:.77rem">
+              <b style="color:var(--rojo)">${escaparHtml(item.position)}</b> · ${escaparHtml(item.reason)}
+              ${item.suggestions.length
+                ? `<span style="color:var(--apagado)"> — sugeridos: ${item.suggestions.map(player =>
+                  `${escaparHtml(player.nombre || 'Sin nombre')} (${player.posicion || '—'}, OVR ${player.overall || '—'})`
+                ).join(' · ')}</span>`
+                : '<span style="color:var(--apagado)"> — no hay jugadores compatibles en la carpeta de este técnico.</span>'}
+            </div>`).join('')}</div>`
+            : '<div style="font-size:.77rem;color:var(--verde);margin-top:6px">Sin posiciones débiles detectadas en esta alineación.</div>'}
+        </div>`;
+      panel.classList.remove('oculto');
+    }
+
+    function solicitarImportarAlineacion(tid) {
+      window._tecnicoImportarAlineacion = tid;
+      document.getElementById('alineacion-import-file').click();
+    }
+
+    async function exportarAlineacionArchivo(tid) {
+      try {
+        await guardarPlantilla(tid);
+        const alignment = alineacionesPlantilla.find(item => item.id === alineacionActivaId);
+        if (!alignment) throw new Error('No se encontró la alineación activa.');
+        const coach = tecnicos.find(item => item.id === tid) || {};
+        const exportedPlayers = new Map();
+        for (const folder of carpetas.filter(item => item.tecnico_id === tid)) {
+          const player = jugadores.find(item => item.id === folder.jugador_id);
+          if (!player || exportedPlayers.has(player.id)) continue;
+          const folderData = Object.fromEntries(
+            Object.entries(folder).filter(([key]) =>
+              !['id', 'tecnico_id', 'jugador_id'].includes(key))
+          );
+          exportedPlayers.set(player.id, {
+            source_id: player.id,
+            data: { ...player },
+            folder_data: folderData
+          });
+        }
+        const slots = (alignment.posiciones || []).map(position => {
+          const folder = carpetas.find(item => item.id === position.cid && item.tecnico_id === tid);
+          const player = folder && jugadores.find(item => item.id === folder.jugador_id);
+          if (!player) return null;
+          return {
+            x: position.x,
+            y: position.y,
+            pos: position.pos,
+            player_ref: player.id
+          };
+        }).filter(Boolean);
+        const warnings = [];
+        for (const record of exportedPlayers.values()) {
+          const reference = record.data.imagen;
+          if (!reference) continue;
+          if (reference.startsWith('data:')) {
+            if (!/^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/]+=*$/i.test(reference)) {
+              record.data.imagen = '';
+              warnings.push(record.data.nombre || 'una imagen');
+            }
+            continue;
+          }
+          try {
+            const response = await fetch(reference);
+            if (!response.ok) throw new Error();
+            const image = await response.blob();
+            if (image.size > 5 * 1024 * 1024 ||
+              !/^image\/(png|jpeg|webp|gif)$/i.test(image.type)) throw new Error();
+            record.data.imagen = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(image);
+            });
+          } catch {
+            warnings.push(record.data.nombre || 'una imagen');
+          }
+        }
+        const share = {
+          format: 'efootball-manager-lineup',
+          version: 1,
+          created_at: new Date().toISOString(),
+          tecnico: { nombre: coach.nombre || 'Técnico', formacion: coach.formacion || alignment.formacion },
+          alineacion: {
+            name: alignment.nombre,
+            formacion: alignment.formacion,
+            posiciones: slots,
+            dibujos: alignment.dibujos || []
+          },
+          jugadores: [...exportedPlayers.values()]
+        };
+        if (JSON.stringify(share).length > 25 * 1024 * 1024) {
+          throw new Error('El archivo de alineación supera el límite de 25 MB.');
+        }
+        descargarJson(share, `alineacion-${(alignment.nombre || 'efm').replace(/[^a-z0-9_-]/gi, '-')}.json`);
+        if (warnings.length) alert(`Se exportó la alineación, pero no se pudieron adjuntar estas imágenes: ${warnings.join(', ')}.`);
+      } catch (error) {
+        alert(`No se pudo exportar la alineación: ${error.message}`);
+      }
+    }
+
+    function dataUrlToFile(dataUrl, filename) {
+      const match = /^data:image\/(png|jpeg|webp|gif);base64,([a-z0-9+/=]+)$/i.exec(dataUrl);
+      if (!match) throw new Error('El archivo contiene una imagen inválida.');
+      const binary = atob(match[2]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+      const extension = match[1].toLowerCase() === 'jpeg' ? 'jpg' : match[1].toLowerCase();
+      return new File([bytes], `${filename.split('.')[0]}.${extension}`, { type: `image/${match[1]}` });
+    }
+
+    function sanearDatosImportados(value, key = '') {
+      if (typeof value === 'string') {
+        if (key === 'imagen') {
+          if (/^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/]+=*$/i.test(value)) return value;
+          return /^\/imagenes\/[a-z0-9_@./?=&%-]+$/i.test(value) ? value : '';
+        }
+        return escaparHtml(value);
+      }
+      if (Array.isArray(value)) return value.map(item => sanearDatosImportados(item));
+      if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([property, item]) =>
+          [property, sanearDatosImportados(item, property)]));
+      }
+      return value;
+    }
+
+    async function importarAlineacionArchivo(input) {
+      const file = input.files?.[0];
+      const tid = window._tecnicoImportarAlineacion;
+      input.value = '';
+      if (!file || !tid) return;
+      try {
+        if (file.size > 25 * 1024 * 1024) throw new Error('El archivo supera el límite de 25 MB.');
+        const share = JSON.parse(await file.text());
+        if (share.format !== 'efootball-manager-lineup' || share.version !== 1 ||
+          !share.alineacion || !Array.isArray(share.alineacion.posiciones) ||
+          !Array.isArray(share.jugadores) || share.jugadores.length > 500 ||
+          share.alineacion.posiciones.length > 30) {
+          throw new Error('El archivo no tiene un formato de alineación compatible.');
+        }
+        const playerRefs = new Set();
+        for (const record of share.jugadores) {
+          if (!record || typeof record.source_id !== 'string' || !record.source_id ||
+            record.source_id.length > 20 || playerRefs.has(record.source_id) ||
+            !record.data || typeof record.data !== 'object' || Array.isArray(record.data) ||
+            typeof record.data.nombre !== 'string' || record.data.nombre.length > 120 ||
+            (record.folder_data !== undefined &&
+              (!record.folder_data || typeof record.folder_data !== 'object' ||
+                Array.isArray(record.folder_data)))) {
+            throw new Error('El archivo contiene un jugador inválido o duplicado.');
+          }
+          playerRefs.add(record.source_id);
+          if (typeof record.data.imagen === 'string' && record.data.imagen.startsWith('data:') &&
+            !/^data:image\/(png|jpeg|webp|gif);base64,[a-z0-9+/]+=*$/i.test(record.data.imagen)) {
+            throw new Error('El archivo contiene una imagen en un formato no admitido.');
+          }
+        }
+        if (share.alineacion.posiciones.some(position =>
+          !position || typeof position.player_ref !== 'string' || !playerRefs.has(position.player_ref) ||
+          !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y)))) {
+          throw new Error('Una posición de la alineación no es válida.');
+        }
+        const drawingColors = new Set(['#ef4444', '#ffffff', '#f0b429', '#10b981', '#60a5fa']);
+        const rawDrawings = Array.isArray(share.alineacion.dibujos) ? share.alineacion.dibujos : [];
+        if (rawDrawings.length > 200 || rawDrawings.some(drawing => {
+          if (!drawing || !['arrow', 'circle', 'cross'].includes(drawing.type) ||
+            !drawingColors.has(drawing.color)) return true;
+          const required = drawing.type === 'arrow'
+            ? ['x1', 'y1', 'x2', 'y2']
+            : drawing.type === 'circle' ? ['cx', 'cy', 'r'] : ['cx', 'cy', 's'];
+          return [...required, 'w'].some(key => drawing[key] !== undefined &&
+            (!Number.isFinite(Number(drawing[key])) || Math.abs(Number(drawing[key])) > 1000)) ||
+            required.some(key => !Number.isFinite(Number(drawing[key])));
+        })) throw new Error('El archivo contiene dibujos inválidos.');
+        const coach = tecnicos.find(item => item.id === tid);
+        if (!coach) throw new Error('No se encontró el técnico donde importar la alineación.');
+        if (!confirm(`Se importarán los jugadores y cartas que falten a "${coach.nombre}" y se añadirá una alineación nueva. ¿Continuar?`)) return;
+
+        const playerIds = new Map();
+        for (const record of share.jugadores) {
+          const source = record.data;
+          let player = jugadores.find(item =>
+            String(item.nombre || '').trim().toLowerCase() === source.nombre.trim().toLowerCase() &&
+            String(item.edicion || '') === String(source.edicion || '') &&
+            String(item.posicion || '') === String(source.posicion || '') &&
+            String(item.overall || '') === String(source.overall || '')
+          );
+          if (!player) {
+            const data = sanearDatosImportados(source);
+            delete data.id;
+            let image = null;
+            if (typeof data.imagen === 'string' && data.imagen.startsWith('data:image/')) {
+              image = dataUrlToFile(data.imagen, `jugador-${Date.now()}.png`);
+              data.imagen = '';
+            } else if (typeof data.imagen === 'string' && !data.imagen.startsWith('/imagenes/')) {
+              data.imagen = '';
+            }
+            player = await API.save('jugadores', data, image);
+            if (!player?.id) throw new Error(`No se pudo crear el jugador ${source.nombre}.`);
+            jugadores.push(player);
+          }
+          playerIds.set(record.source_id, player.id);
+        }
+
+        const foldersByPlayer = new Map();
+        const recordsBySourceId = new Map(share.jugadores.map(record => [record.source_id, record]));
+        for (const sourceId of playerIds.keys()) {
+          const playerId = playerIds.get(sourceId);
+          let folder = carpetas.find(item => item.tecnico_id === tid && item.jugador_id === playerId);
+          if (!folder) {
+            const folderData = sanearDatosImportados(recordsBySourceId.get(sourceId)?.folder_data || {});
+            delete folderData.id;
+            delete folderData.tecnico_id;
+            delete folderData.jugador_id;
+            folder = await API.save('carpetas', {
+              ...folderData,
+              tecnico_id: tid,
+              jugador_id: playerId
+            });
+            if (!folder?.id) throw new Error('No se pudo asignar un jugador importado al técnico.');
+            carpetas.push(folder);
+          }
+          foldersByPlayer.set(sourceId, folder);
+        }
+        const positions = share.alineacion.posiciones.map(position => {
+          const folder = foldersByPlayer.get(position.player_ref);
+          if (!folder) throw new Error('La alineación hace referencia a un jugador inexistente.');
+          return {
+            cid: folder.id,
+            jugador_id: folder.jugador_id,
+            x: Math.max(4, Math.min(96, Number(position.x) || 50)),
+            y: Math.max(4, Math.min(96, Number(position.y) || 50)),
+            pos: POSICIONES.includes(position.pos) ? position.pos : ''
+          };
+        });
+        const safeDrawings = rawDrawings.map(drawing => ({
+            type: drawing.type,
+            color: drawing.color,
+            w: Math.max(1, Math.min(12, Number(drawing.w) || 3)),
+            ...(drawing.type === 'arrow'
+              ? { x1: Number(drawing.x1), y1: Number(drawing.y1), x2: Number(drawing.x2), y2: Number(drawing.y2) }
+              : { cx: Number(drawing.cx), cy: Number(drawing.cy), ...(drawing.type === 'circle' ? { r: Math.max(1, Number(drawing.r) || 1), dashed: Boolean(drawing.dashed) } : { s: Math.max(1, Number(drawing.s) || 20) }) })
+          }));
+        const imported = {
+          id: nuevoIdAlineacion(),
+          nombre: `${String(share.alineacion.name || 'Alineación importada').trim().slice(0, 32)} (importada)`,
+          formacion: DEF_FORM[share.alineacion.formacion] ? share.alineacion.formacion : '4-2-3-1',
+          posiciones: positions,
+          dibujos: safeDrawings
+        };
+        alineacionesPlantilla.push(imported);
+        alineacionActivaId = imported.id;
+        cargarDatosAlineacion(tid, imported);
+        renderCampo(tid);
+        await guardarPlantilla(tid);
+        alert('Alineación importada. Ya puedes compararla desde el Laboratorio.');
+      } catch (error) {
+        alert(`No se pudo importar la alineación: ${error.message}`);
+      }
     }
 
     // ── CAMBIO DE JUGADORES Y MEJOR 11 ───────────────────────────────────────────
@@ -10012,7 +10362,7 @@
     // ██  CAPA OFFLINE — IndexedDB replica la API del servidor  ████████████████
     // ══════════════════════════════════════════════════════════════════════════
     const EFM_DB_NAME = 'efootball-manager';
-    const EFM_DB_VER = 1;
+    const EFM_DB_VER = 2;
     let _db = null;
 
     function abrirDB() {
@@ -10021,7 +10371,7 @@
         const req = indexedDB.open(EFM_DB_NAME, EFM_DB_VER);
         req.onupgradeneeded = e => {
           const db = e.target.result;
-          ['jugadores', 'tecnicos', 'carpetas', 'plantillas', 'historial', 'prog_historial']
+          ['jugadores', 'tecnicos', 'carpetas', 'plantillas', 'historial', 'prog_historial', 'versions']
             .forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s); });
         };
         req.onsuccess = e => { _db = e.target.result; res(_db); };
@@ -10225,53 +10575,203 @@
       }
     };
 
-    // ── Exportar/Importar para sincronizar ────────────────────────────────────
-    async function exportarDatos() {
-      const data = {
-        version: 1,
-        fecha: new Date().toISOString(),
-        jugadores: (await idbGet('jugadores', '__all__')) || jugadores,
-        tecnicos: (await idbGet('tecnicos', '__all__')) || tecnicos,
-        carpetas: (await idbGet('carpetas', '__all__')) || carpetas,
-        plantillas: {},
-        historial: {},
-        prog_historial: {}
+    // ── Exportar/Importar respaldo completo ───────────────────────────────────
+    async function datosLocalesParaRespaldo() {
+      const localPlayers = (await idbGet('jugadores', '__all__')) || jugadores;
+      const localCoaches = (await idbGet('tecnicos', '__all__')) || tecnicos;
+      const localFolders = (await idbGet('carpetas', '__all__')) || carpetas;
+      const plantillas = {};
+      for (const coach of localCoaches) {
+        const lineup = await idbGet('plantillas', coach.id);
+        if (lineup) plantillas[coach.id] = lineup;
+      }
+      const history = [];
+      const progress = [];
+      for (const player of localPlayers) {
+        for (const snapshot of (await idbGet('historial', player.id)) || []) {
+          history.push({ player_id: player.id, snapshot, created_at: snapshot._ts || null });
+        }
+        for (const snapshot of (await idbGet('prog_historial', player.id)) || []) {
+          progress.push({ player_id: player.id, snapshot, created_at: snapshot._ts || null });
+        }
+      }
+      let scorers = null;
+      try { scorers = JSON.parse(localStorage.getItem('ef_goleadores_data') || 'null'); } catch { }
+      const toRecords = rows => rows.map(row => ({ id: String(row.id), data: row }));
+      return {
+        format: 'efootball-manager-backup',
+        version: 2,
+        created_at: new Date().toISOString(),
+        data: {
+          jugadores: toRecords(localPlayers),
+          tecnicos: toRecords(localCoaches),
+          carpetas: toRecords(localFolders),
+          plantillas,
+          historial: history,
+          prog_historial: progress,
+          goleadores: scorers
+        },
+        versions: await idbGet('versions'),
+        images: [],
+        image_warnings: ['El modo offline conserva las imágenes disponibles en IndexedDB.']
       };
-      // Plantillas
-      const pids = [...new Set(((await idbGet('tecnicos', '__all__')) || tecnicos).map(t => t.id))];
-      for (const tid of pids) {
-        const p = await idbGet('plantillas', tid);
-        if (p) data.plantillas[tid] = p;
-      }
-      // Historiales
-      const jids = [...new Set(((await idbGet('jugadores', '__all__')) || jugadores).map(j => j.id))];
-      for (const jid of jids) {
-        const h = await idbGet('historial', jid);
-        const ph = await idbGet('prog_historial', jid);
-        if (h) data.historial[jid] = h;
-        if (ph) data.prog_historial[jid] = ph;
-      }
+    }
+
+    function descargarJson(data, filename) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `efm-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function exportarDatos() {
+      try {
+        let backup;
+        if (!_modoOffline) {
+          const response = await fetch('/api/backup', { cache: 'no-store' });
+          if (!response.ok) throw new Error((await response.json()).error || `Error ${response.status}`);
+          backup = await response.json();
+        } else {
+          backup = await datosLocalesParaRespaldo();
+        }
+        descargarJson(backup, `efm-backup-${new Date().toISOString().slice(0, 10)}.json`);
+        if (backup.image_warnings?.length) {
+          alert(`Respaldo descargado.\n\nAviso sobre imágenes: ${backup.image_warnings.join('\n')}`);
+        }
+      } catch (error) {
+        alert(`No se pudo crear el respaldo: ${error.message}`);
+      }
+    }
+
+    async function aplicarRespaldoOffline(backup) {
+      if (!backup || typeof backup !== 'object' ||
+        (backup.format && backup.format !== 'efootball-manager-backup') ||
+        (backup.format === 'efootball-manager-backup' && backup.version !== 2)) {
+        throw new Error('El archivo no es un respaldo compatible.');
+      }
+      const data = backup.data || backup;
+      if (!data || typeof data !== 'object' ||
+        !['jugadores', 'tecnicos', 'carpetas'].every(key => Array.isArray(data[key])) ||
+        !data.plantillas || typeof data.plantillas !== 'object' || Array.isArray(data.plantillas) ||
+        (data.goleadores !== null && data.goleadores !== undefined &&
+          (typeof data.goleadores !== 'object' || Array.isArray(data.goleadores))) ||
+        ![data.historial, data.prog_historial].every(value =>
+          value === undefined || Array.isArray(value) || (value && typeof value === 'object' && !Array.isArray(value))) ||
+        (backup.images !== undefined && !Array.isArray(backup.images))) {
+        throw new Error('La estructura de datos del respaldo no es válida.');
+      }
+      const readRecords = (rows, label) => {
+        const seen = new Set();
+        return (rows || []).map(row => {
+          const record = row?.data && typeof row.data === 'object' ? row.data : row;
+          const id = String(row?.id || record?.id || '');
+          if (!record || typeof record !== 'object' || !id || id.length > 20 || seen.has(id)) {
+            throw new Error(`Se encontró un registro inválido en ${label}.`);
+          }
+          seen.add(id);
+          return { ...record, id };
+        });
+      };
+      const imageMap = new Map();
+      let imageBytes = 0;
+      for (const image of backup.images || []) {
+        if (!image || typeof image.reference !== 'string' ||
+          typeof image.content_type !== 'string' || !image.content_type.startsWith('image/') ||
+          typeof image.content_base64 !== 'string' ||
+          !/^[a-z0-9+/]*={0,2}$/i.test(image.content_base64)) {
+          throw new Error('El respaldo contiene una imagen inválida.');
+        }
+        imageBytes += Math.floor(image.content_base64.length * 3 / 4);
+        if (imageBytes > 25 * 1024 * 1024) throw new Error('Las imágenes superan el límite de 25 MB.');
+        imageMap.set(image.reference, `data:${image.content_type};base64,${image.content_base64}`);
+      }
+      const replaceImages = rows => rows.map(row => {
+        const image = imageMap.get(row.imagen);
+        return image ? { ...row, imagen: image } : row;
+      });
+      const localPlayers = replaceImages(readRecords(data.jugadores, 'jugadores'));
+      const localCoaches = replaceImages(readRecords(data.tecnicos, 'técnicos'));
+      const localFolders = readRecords(data.carpetas, 'carpetas');
+      for (const lineup of Object.values(data.plantillas)) {
+        if (!lineup || typeof lineup !== 'object') throw new Error('Una alineación del respaldo no es válida.');
+      }
+      const expandHistory = value => Array.isArray(value)
+        ? value
+        : Object.entries(value || {}).flatMap(([player_id, snapshots]) =>
+          Array.isArray(snapshots) ? snapshots.map(snapshot => ({
+            player_id,
+            snapshot,
+            created_at: snapshot?._ts || null
+          })) : []);
+      const historyByPlayer = new Map();
+      const progressByPlayer = new Map();
+      for (const [items, target] of [
+        [expandHistory(data.historial), historyByPlayer],
+        [expandHistory(data.prog_historial), progressByPlayer]
+      ]) {
+        for (const item of items) {
+          if (!item || typeof item.player_id !== 'string' || !item.snapshot ||
+            typeof item.snapshot !== 'object') {
+            throw new Error('El respaldo contiene un historial inválido.');
+          }
+          if (!target.has(item.player_id)) target.set(item.player_id, []);
+          target.get(item.player_id).push(item.snapshot);
+        }
+      }
+      const versions = backup.versions || [];
+      if (!Array.isArray(versions) || versions.some(version =>
+        !version || typeof version.id !== 'string' || !version.data || typeof version.data !== 'object')) {
+        throw new Error('El respaldo contiene versiones guardadas inválidas.');
+      }
+
+      const database = await abrirDB();
+      const stores = ['jugadores', 'tecnicos', 'carpetas', 'plantillas', 'historial', 'prog_historial', 'versions'];
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction(stores, 'readwrite');
+        for (const store of stores) transaction.objectStore(store).clear();
+        transaction.objectStore('jugadores').put(localPlayers, '__all__');
+        transaction.objectStore('tecnicos').put(localCoaches, '__all__');
+        transaction.objectStore('carpetas').put(localFolders, '__all__');
+        for (const [id, lineup] of Object.entries(data.plantillas)) {
+          transaction.objectStore('plantillas').put(lineup, id);
+        }
+        for (const [id, history] of historyByPlayer) transaction.objectStore('historial').put(history, id);
+        for (const [id, history] of progressByPlayer) transaction.objectStore('prog_historial').put(history, id);
+        for (const version of versions) transaction.objectStore('versions').put(version, version.id);
+        transaction.oncomplete = resolve;
+        transaction.onerror = event => reject(event.target.error);
+        transaction.onabort = event => reject(event.target.error || new Error('La restauración fue cancelada.'));
+      });
+      if (data.goleadores) localStorage.setItem('ef_goleadores_data', JSON.stringify(data.goleadores));
+      else localStorage.removeItem('ef_goleadores_data');
+      await cargar();
     }
 
     async function importarDatos(file) {
+      if (!file) return;
       try {
-        const text = await file.text();
-        const data = JSON.parse(text);
-        if (data.jugadores) await idbSet('jugadores', '__all__', data.jugadores);
-        if (data.tecnicos) await idbSet('tecnicos', '__all__', data.tecnicos);
-        if (data.carpetas) await idbSet('carpetas', '__all__', data.carpetas);
-        if (data.plantillas) for (const [k, v] of Object.entries(data.plantillas)) await idbSet('plantillas', k, v);
-        if (data.historial) for (const [k, v] of Object.entries(data.historial)) await idbSet('historial', k, v);
-        if (data.prog_historial) for (const [k, v] of Object.entries(data.prog_historial)) await idbSet('prog_historial', k, v);
-        await cargar();
-        alert('✅ Datos importados correctamente');
-      } catch (e) {
-        alert('❌ Error al importar: ' + e.message);
+        if (file.size > 40 * 1024 * 1024) throw new Error('El archivo supera el límite de 40 MB.');
+        const backup = JSON.parse(await file.text());
+        if (!confirm('Restaurar reemplazará tus datos actuales (jugadores, goleadores, historial y alineaciones). ¿Continuar?')) return;
+        if (!_modoOffline) {
+          const response = await fetch('/api/backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(backup)
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+          alert(`✅ Datos restaurados: ${result.jugadores} jugadores, ${result.tecnicos} técnicos y ${result.alineaciones} alineaciones.`);
+          window.location.reload();
+          return;
+        }
+        await aplicarRespaldoOffline(backup);
+        alert('✅ Datos locales restaurados correctamente.');
+      } catch (error) {
+        alert(`❌ No se pudo restaurar el respaldo: ${error.message}`);
       }
     }
 
@@ -11007,7 +11507,7 @@
         <div class="sync-btn-card" onclick="exportarDatos()">
           <div class="sync-btn-card-icon">📥</div>
           <div class="sync-btn-card-nom">Exportar backup</div>
-          <div class="sync-btn-card-desc">Descarga un JSON con todos tus datos</div>
+          <div class="sync-btn-card-desc">Descarga tus datos, goleadores e imágenes</div>
         </div>
         <div class="sync-btn-card" onclick="document.getElementById('import-file').click()">
           <div class="sync-btn-card-icon">📤</div>
@@ -11031,11 +11531,22 @@
         </div>
       </div>
 
+      <section style="margin-top:18px;padding:14px;background:var(--oscuro);border:1px solid var(--borde);border-radius:12px">
+        <div style="font-weight:800;color:var(--oro);margin-bottom:5px">🕘 Versiones de mi equipo</div>
+        <div style="font-size:.78rem;color:var(--apagado);margin-bottom:10px">Guarda un punto de restauración antes de hacer cambios grandes y compara las versiones después.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="version-equipo-nombre" maxlength="120" placeholder="Ej. Antes de cambiar formación"
+            style="flex:1;min-width:180px;background:var(--card);border:1px solid var(--borde);border-radius:8px;color:var(--texto);padding:9px 11px">
+          <button class="btn-sm btn-sm-oro" onclick="guardarVersionEquipo()">💾 Guardar versión</button>
+        </div>
+        <div id="versiones-equipo-lista" style="display:grid;gap:8px;margin-top:12px"></div>
+      </section>
+
       <div class="sync-nota">
         <strong>¿Cómo funciona?</strong><br>
-        Con el servidor Python activo, todos los cambios se guardan en los archivos JSON.
+        Con el servidor activo, los cambios se guardan en tu base de datos.
         Sin servidor, los datos se guardan en el navegador (IndexedDB).
-        Usa <strong>Exportar backup</strong> para sincronizar entre ambos.
+        Restaurar reemplaza tus datos actuales; conserva una copia antes de continuar.
       </div>
 
       <div class="sync-footer">
@@ -11045,6 +11556,8 @@
   </div>
   <input type="file" id="import-file" accept=".json" style="display:none"
     onchange="importarDatos(this.files[0]).then(()=>this.value='')">
+  <input type="file" id="alineacion-import-file" accept=".json,application/json" style="display:none"
+    onchange="importarAlineacionArchivo(this)">
 
   <script>
     // ── PANEL SYNC ────────────────────────────────────────────────────────────────
@@ -11071,6 +11584,7 @@
     function abrirSincronizacion() {
       document.getElementById('sync-overlay').classList.remove('oculto');
       actualizarEstadoSync();
+      cargarVersionesEquipo();
     }
 
     function cerrarSync() {
@@ -11094,6 +11608,182 @@
         dot.style.background = '#ef4444';
         txt.textContent = '📴 Sin servidor — usando datos locales del navegador';
         box.style.borderColor = 'rgba(239,68,68,.3)';
+      }
+    }
+
+    async function cargarVersionesEquipo() {
+      const container = document.getElementById('versiones-equipo-lista');
+      if (!container) return;
+      try {
+        let versions;
+        if (_modoOffline) {
+          versions = await idbGet('versions');
+          versions.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+        } else {
+          const response = await fetch('/api/versions', { cache: 'no-store' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+          versions = result;
+        }
+        if (!versions.length) {
+          container.innerHTML = '<div style="color:var(--apagado);font-size:.78rem;padding:8px 0">Todavía no hay versiones guardadas.</div>';
+          return;
+        }
+        container.innerHTML = versions.map(version => `
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px;background:var(--card);border:1px solid var(--borde);border-radius:9px">
+            <div style="flex:1;min-width:140px">
+              <div style="font-size:.84rem;font-weight:700">${escaparHtml(version.name)}</div>
+              <div style="font-size:.7rem;color:var(--apagado)">${new Date(version.created_at).toLocaleString('es')}</div>
+              <div style="font-size:.7rem;color:var(--apagado)">${version.jugadores ?? '—'} jugadores · ${version.tecnicos ?? '—'} técnicos</div>
+            </div>
+            <button class="btn-sm" onclick="compararVersionEquipo('${escaparHtml(version.id)}')">⚖️ Comparar</button>
+            <button class="btn-sm btn-sm-oro" onclick="restaurarVersionEquipo('${escaparHtml(version.id)}')">↩️ Restaurar</button>
+            <button class="btn-sm" style="background:#ef4444;color:white" onclick="eliminarVersionEquipo('${escaparHtml(version.id)}')">🗑️</button>
+          </div>`).join('');
+      } catch (error) {
+        container.textContent = `No se pudieron cargar las versiones: ${error.message}`;
+      }
+    }
+
+    async function guardarVersionEquipo(nameOverride) {
+      const input = document.getElementById('version-equipo-nombre');
+      const name = String(nameOverride || input.value || '').trim();
+      if (!name) {
+        alert('Escribe un nombre para esta versión.');
+        input.focus();
+        return null;
+      }
+      try {
+        let version;
+        if (_modoOffline) {
+          const backup = await datosLocalesParaRespaldo();
+          version = {
+            id: globalThis.crypto?.randomUUID?.() || `version-${Date.now()}`,
+            name: name.slice(0, 120),
+            created_at: new Date().toISOString(),
+            data: backup.data
+          };
+          await idbSet('versions', version.id, version);
+        } else {
+          const response = await fetch('/api/versions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name.slice(0, 120) })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+          version = result;
+        }
+        if (input) input.value = '';
+        await cargarVersionesEquipo();
+        return version;
+      } catch (error) {
+        alert(`No se pudo guardar la versión: ${error.message}`);
+        return null;
+      }
+    }
+
+    async function obtenerDatosVersion(versionId) {
+      if (_modoOffline) {
+        const version = await idbGet('versions', versionId);
+        if (!version) throw new Error('No se encontró esa versión.');
+        return version;
+      }
+      const response = await fetch(`/api/versions/${encodeURIComponent(versionId)}`, { cache: 'no-store' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+      return result;
+    }
+
+    async function datosActualesVersion() {
+      if (_modoOffline) return (await datosLocalesParaRespaldo()).data;
+      const response = await fetch('/api/backup', { cache: 'no-store' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+      return result.data;
+    }
+
+    async function compararVersionEquipo(versionId) {
+      try {
+        const [saved, current] = await Promise.all([
+          obtenerDatosVersion(versionId),
+          datosActualesVersion()
+        ]);
+        const before = saved.data;
+        const compareRows = key => {
+          const oldRows = new Map((before[key] || []).map(item => {
+            const record = item.data || item;
+            return [String(item.id || record.id), record];
+          }));
+          const newRows = new Map((current[key] || []).map(item => {
+            const record = item.data || item;
+            return [String(item.id || record.id), record];
+          }));
+          const added = [...newRows.keys()].filter(id => !oldRows.has(id)).length;
+          const removed = [...oldRows.keys()].filter(id => !newRows.has(id)).length;
+          const changed = [...newRows.keys()].filter(id => oldRows.has(id) &&
+            JSON.stringify(newRows.get(id)) !== JSON.stringify(oldRows.get(id))).length;
+          return { added, removed, changed };
+        };
+        const players = compareRows('jugadores');
+        const coaches = compareRows('tecnicos');
+        const folders = compareRows('carpetas');
+        const oldLineups = before.plantillas || {};
+        const newLineups = current.plantillas || {};
+        const changedLineups = new Set([...Object.keys(oldLineups), ...Object.keys(newLineups)])
+          .values();
+        const countChanged = [...changedLineups].filter(id =>
+          JSON.stringify(oldLineups[id] || null) !== JSON.stringify(newLineups[id] || null)).length;
+        alert(`Comparación con "${saved.name}"\n\n` +
+          `Jugadores: +${players.added} · −${players.removed} · modificados ${players.changed}\n` +
+          `Técnicos: +${coaches.added} · −${coaches.removed} · modificados ${coaches.changed}\n` +
+          `Asignaciones: +${folders.added} · −${folders.removed} · modificadas ${folders.changed}\n` +
+          `Alineaciones distintas: ${countChanged}\n` +
+          `Goleadores: ${JSON.stringify(before.goleadores || null) === JSON.stringify(current.goleadores || null) ? 'sin cambios' : 'con cambios'}`);
+      } catch (error) {
+        alert(`No se pudo comparar la versión: ${error.message}`);
+      }
+    }
+
+    async function restaurarVersionEquipo(versionId) {
+      const saved = await obtenerDatosVersion(versionId).catch(error => {
+        alert(`No se pudo abrir la versión: ${error.message}`);
+        return null;
+      });
+      if (!saved || !confirm(`Se creará una versión automática del estado actual y luego se restaurará "${saved.name}". ¿Continuar?`)) return;
+      try {
+        const currentVersion = await guardarVersionEquipo(`Antes de restaurar ${saved.name}`.slice(0, 120));
+        if (!currentVersion) return;
+        if (_modoOffline) {
+          const versions = await idbGet('versions');
+          await aplicarRespaldoOffline({ data: saved.data, versions });
+        } else {
+          const response = await fetch(`/api/versions/${encodeURIComponent(versionId)}/restore`, { method: 'POST' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+          window.location.reload();
+          return;
+        }
+        alert('Versión restaurada.');
+        await cargarVersionesEquipo();
+      } catch (error) {
+        alert(`No se pudo restaurar la versión: ${error.message}`);
+      }
+    }
+
+    async function eliminarVersionEquipo(versionId) {
+      if (!confirm('¿Eliminar esta versión guardada?')) return;
+      try {
+        if (_modoOffline) {
+          await idbDel('versions', versionId);
+        } else {
+          const response = await fetch(`/api/versions/${encodeURIComponent(versionId)}/delete`, { method: 'POST' });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Error ${response.status}`);
+        }
+        await cargarVersionesEquipo();
+      } catch (error) {
+        alert(`No se pudo eliminar la versión: ${error.message}`);
       }
     }
   </script>

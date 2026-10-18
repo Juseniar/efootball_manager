@@ -1,10 +1,14 @@
+import base64
+import binascii
 import hashlib
 import hmac
 import json
+import mimetypes
 import os
 import uuid
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from django.http import (
     FileResponse,
@@ -29,15 +33,18 @@ from models import (
     Lineup,
     Player,
     ProgHistory,
+    SquadSnapshot,
     User,
     db,
 )
-from storage import upload_public_image
+from storage import download_public_image, upload_public_image
 
 
 BASE_DIR = Path(os.environ.get("DATA_DIR", "efootball_data"))
 BASE_DIR.mkdir(exist_ok=True)
 ADMIN_USERS = {"admin"}
+MAX_BACKUP_BYTES = 25 * 1024 * 1024
+MAX_BACKUP_IMAGE_BYTES = 10 * 1024 * 1024
 
 
 def json_response(data, status=200):
@@ -139,6 +146,526 @@ def _safe_file(base, relative):
     except ValueError:
         return None
     return candidate if candidate.is_file() else None
+
+
+def _user_data(username):
+    return {
+        "jugadores": [
+            {"id": item.id, "data": item.parsed_data}
+            for item in Player.query.filter_by(username=username).order_by(Player.id)
+        ],
+        "tecnicos": [
+            {"id": item.id, "data": item.parsed_data}
+            for item in Coach.query.filter_by(username=username).order_by(Coach.id)
+        ],
+        "carpetas": [
+            {"id": item.id, "data": item.parsed_data}
+            for item in Folder.query.filter_by(username=username).order_by(Folder.id)
+        ],
+        "plantillas": {
+            item.coach_id: json.loads(item.data)
+            for item in Lineup.query.filter_by(username=username).order_by(Lineup.coach_id)
+        },
+        "historial": [
+            {
+                "player_id": item.player_id,
+                "snapshot": json.loads(item.snapshot),
+                "created_at": item.created_at,
+            }
+            for item in History.query.filter_by(username=username).order_by(History.id)
+        ],
+        "prog_historial": [
+            {
+                "player_id": item.player_id,
+                "snapshot": json.loads(item.snapshot),
+                "created_at": item.created_at,
+            }
+            for item in ProgHistory.query.filter_by(username=username).order_by(ProgHistory.id)
+        ],
+        "goleadores": next(
+            (
+                item.parsed_data
+                for item in GoalTracker.query.filter_by(username=username).limit(1)
+            ),
+            None,
+        ),
+    }
+
+
+def _backup_image(reference, username):
+    parsed = urlsplit(reference)
+    path = unquote(parsed.path)
+    image_dir = user_dir(username) / "imagenes"
+    local_prefix = f"/imagenes/{username}/"
+    if not parsed.scheme and path.startswith(local_prefix):
+        filename = path[len(local_prefix):]
+        if not filename or Path(filename).name != filename:
+            return None
+        image_path = _safe_file(image_dir, filename)
+        if not image_path:
+            return None
+        content = image_path.read_bytes()
+        object_path = None
+    else:
+        storage_url = os.environ.get("SUPABASE_URL", "").rstrip("/")
+        if not storage_url:
+            return None
+        storage_origin = urlsplit(storage_url)
+        if (parsed.scheme, parsed.netloc) != (storage_origin.scheme, storage_origin.netloc):
+            return None
+        bucket = os.environ.get("SUPABASE_STORAGE_BUCKET", "player-images")
+        object_prefix = f"/storage/v1/object/public/{bucket}/{username}/"
+        if not path.startswith(object_prefix):
+            return None
+        object_path = path[len(f"/storage/v1/object/public/{bucket}/"):]
+        if any(part in ("", ".", "..") for part in object_path.split("/")):
+            return None
+        content = download_public_image(object_path, MAX_BACKUP_IMAGE_BYTES)
+
+    if len(content) > MAX_BACKUP_IMAGE_BYTES:
+        raise ValueError("Una imagen supera el límite de 10 MB del respaldo.")
+    filename = Path(object_path or filename).name
+    content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    if not content_type.startswith("image/"):
+        return None
+    return {
+        "reference": reference,
+        "filename": filename,
+        "object_path": object_path,
+        "content_type": content_type,
+        "content_base64": base64.b64encode(content).decode("ascii"),
+    }
+
+
+def _make_backup(username):
+    data = _user_data(username)
+    versions = [
+        {
+            "id": item.id,
+            "name": item.name,
+            "created_at": item.created_at,
+            "data": json.loads(item.data),
+        }
+        for item in SquadSnapshot.query.filter_by(username=username).order_by(
+            SquadSnapshot.created_at, SquadSnapshot.id
+        )
+    ]
+    image_refs = set()
+    for collection in (data["jugadores"], data["tecnicos"]):
+        for item in collection:
+            reference = item["data"].get("imagen")
+            if isinstance(reference, str) and reference and not reference.startswith("data:"):
+                image_refs.add(reference)
+    for version in versions:
+        snapshot_data = version["data"]
+        for key in ("jugadores", "tecnicos"):
+            for item in snapshot_data.get(key, []):
+                reference = item.get("data", {}).get("imagen")
+                if isinstance(reference, str) and reference and not reference.startswith("data:"):
+                    image_refs.add(reference)
+
+    images = []
+    warnings = []
+    total_image_bytes = 0
+    for reference in sorted(image_refs):
+        try:
+            image = _backup_image(reference, username)
+        except (OSError, RuntimeError, ValueError) as error:
+            warnings.append(f"No se pudo incluir una imagen: {error}")
+            continue
+        if image:
+            image_size = len(base64.b64decode(image["content_base64"]))
+            if total_image_bytes + image_size > MAX_BACKUP_BYTES:
+                warnings.append("Se omitieron imágenes al alcanzar el límite de 25 MB por respaldo.")
+                continue
+            total_image_bytes += image_size
+            images.append(image)
+        else:
+            warnings.append(
+                "Una imagen externa o ausente conserva su URL, pero no está incluida."
+            )
+    return {
+        "format": "efootball-manager-backup",
+        "version": 2,
+        "created_at": datetime.now().astimezone().isoformat(),
+        "data": data,
+        "versions": versions,
+        "images": images,
+        "image_warnings": warnings,
+    }
+
+
+def _normalize_backup(backup, username):
+    if not isinstance(backup, dict):
+        raise ValueError("El respaldo debe ser un objeto JSON.")
+    if backup.get("format") == "efootball-manager-backup":
+        if backup.get("version") != 2:
+            raise ValueError("La versión del respaldo no es compatible.")
+        data = backup.get("data")
+    else:
+        data = backup
+
+    if not isinstance(data, dict):
+        raise ValueError("El respaldo no contiene datos válidos.")
+    players = data.get("jugadores", [])
+    coaches = data.get("tecnicos", [])
+    folders = data.get("carpetas", [])
+    if not all(isinstance(items, list) for items in (players, coaches, folders)):
+        raise ValueError("Jugadores, técnicos y carpetas deben ser listas.")
+
+    def normalize_records(records, label):
+        normalized = []
+        ids = set()
+        for record in records:
+            if not isinstance(record, dict):
+                raise ValueError(f"Registro de {label} inválido.")
+            item_data = record.get("data", record)
+            if not isinstance(item_data, dict):
+                raise ValueError(f"Registro de {label} inválido.")
+            record_id = str(record.get("id") or item_data.get("id") or "")
+            if not record_id or len(record_id) > 20 or record_id in ids:
+                raise ValueError(f"ID inválido o duplicado en {label}.")
+            ids.add(record_id)
+            item_data = dict(item_data)
+            item_data["id"] = record_id
+            normalized.append({"id": record_id, "data": item_data})
+        return normalized
+
+    normalized = {
+        "jugadores": normalize_records(players, "jugadores"),
+        "tecnicos": normalize_records(coaches, "técnicos"),
+        "carpetas": normalize_records(folders, "carpetas"),
+        "plantillas": data.get("plantillas", {}),
+        "historial": data.get("historial", []),
+        "prog_historial": data.get("prog_historial", []),
+        "goleadores": data.get("goleadores"),
+    }
+
+    # Accept the original browser backup format (maps keyed by player/coach ID).
+    for key in ("historial", "prog_historial"):
+        if isinstance(normalized[key], dict):
+            normalized[key] = [
+                {
+                    "player_id": player_id,
+                    "snapshot": snapshot,
+                    "created_at": snapshot.get("_ts") if isinstance(snapshot, dict) else None,
+                }
+                for player_id, snapshots in normalized[key].items()
+                if isinstance(snapshots, list)
+                for snapshot in snapshots
+            ]
+    if not isinstance(normalized["plantillas"], dict):
+        raise ValueError("Las alineaciones deben ser un objeto.")
+    for coach_id, lineup in normalized["plantillas"].items():
+        if not isinstance(coach_id, str) or len(coach_id) > 20 or not isinstance(lineup, (dict, list)):
+            raise ValueError("Se encontró una alineación inválida.")
+    for key in ("historial", "prog_historial"):
+        for item in normalized[key]:
+            if (
+                not isinstance(item, dict)
+                or not isinstance(item.get("snapshot"), dict)
+                or not isinstance(item.get("player_id"), str)
+            ):
+                raise ValueError(f"Registro inválido en {key}.")
+    if normalized["goleadores"] is not None and not isinstance(normalized["goleadores"], dict):
+        raise ValueError("Los datos de goleadores no tienen un formato válido.")
+
+    images = backup.get("images", [])
+    if not isinstance(images, list):
+        raise ValueError("La lista de imágenes no es válida.")
+    decoded_images = {}
+    total_image_bytes = 0
+    for image in images:
+        if not isinstance(image, dict):
+            raise ValueError("El respaldo contiene una imagen inválida.")
+        reference = image.get("reference")
+        filename = image.get("filename")
+        content_type = image.get("content_type")
+        encoded = image.get("content_base64")
+        if (
+            not isinstance(reference, str)
+            or not isinstance(filename, str)
+            or Path(filename).name != filename
+            or not isinstance(content_type, str)
+            or not content_type.startswith("image/")
+            or not isinstance(encoded, str)
+        ):
+            raise ValueError("Los metadatos de una imagen no son válidos.")
+        object_path = image.get("object_path")
+        if object_path is not None and (
+            not isinstance(object_path, str)
+            or not object_path.startswith(f"{username}/")
+            or any(part in ("", ".", "..") for part in object_path.split("/"))
+        ):
+            raise ValueError("La ruta de una imagen no es válida.")
+        try:
+            content = base64.b64decode(encoded, validate=True)
+        except (binascii.Error, ValueError) as error:
+            raise ValueError("Una imagen del respaldo está dañada.") from error
+        total_image_bytes += len(content)
+        if len(content) > MAX_BACKUP_IMAGE_BYTES or total_image_bytes > MAX_BACKUP_BYTES:
+            raise ValueError("Las imágenes superan el límite permitido del respaldo.")
+        decoded_images[reference] = {
+            "filename": filename,
+            "object_path": object_path,
+            "content_type": content_type,
+            "content": content,
+        }
+    versions = backup.get("versions", [])
+    if not isinstance(versions, list):
+        raise ValueError("El historial de versiones no es válido.")
+    normalized_versions = []
+    version_ids = set()
+    for version in versions:
+        if (
+            not isinstance(version, dict)
+            or not isinstance(version.get("id"), str)
+            or not version["id"]
+            or len(version["id"]) > 36
+            or version["id"] in version_ids
+            or not isinstance(version.get("name"), str)
+            or not version["name"]
+            or len(version["name"]) > 120
+            or (version.get("created_at") is not None and not isinstance(version["created_at"], str))
+            or not isinstance(version.get("data"), dict)
+        ):
+            raise ValueError("Una versión guardada tiene un formato inválido.")
+        version_ids.add(version["id"])
+        version_data, _, _ = _normalize_backup({"data": version["data"]}, username)
+        normalized_versions.append({**version, "data": version_data})
+    return normalized, decoded_images, normalized_versions
+
+
+def _replace_user_data(username, data, versions=()):
+    for model in (History, ProgHistory, Folder, Coach, Player, Lineup, GoalTracker, SquadSnapshot):
+        model.query.filter_by(username=username).delete(synchronize_session=False)
+    db.session.flush()
+    db.session.expunge_all()
+
+    for model, collection in ((Player, data["jugadores"]), (Coach, data["tecnicos"]), (Folder, data["carpetas"])):
+        db.session.add_all(
+            model(username=username, id=item["id"], data=json.dumps(item["data"], ensure_ascii=False))
+            for item in collection
+        )
+    db.session.add_all(
+        Lineup(username=username, coach_id=coach_id, data=json.dumps(value, ensure_ascii=False))
+        for coach_id, value in data["plantillas"].items()
+    )
+    db.session.add_all(
+        History(
+            username=username,
+            player_id=item["player_id"],
+            snapshot=json.dumps(item["snapshot"], ensure_ascii=False),
+            created_at=item.get("created_at"),
+        )
+        for item in data["historial"]
+    )
+    db.session.add_all(
+        ProgHistory(
+            username=username,
+            player_id=item["player_id"],
+            snapshot=json.dumps(item["snapshot"], ensure_ascii=False),
+            created_at=item.get("created_at"),
+        )
+        for item in data["prog_historial"]
+    )
+    if data["goleadores"] is not None:
+        db.session.add(
+            GoalTracker(username=username, data=json.dumps(data["goleadores"], ensure_ascii=False))
+        )
+    db.session.add_all(
+        SquadSnapshot(
+            id=version["id"],
+            username=username,
+            name=version["name"][:120],
+            created_at=version.get("created_at") or datetime.now().isoformat(),
+            data=json.dumps(version["data"], ensure_ascii=False),
+        )
+        for version in versions
+    )
+    db.session.commit()
+
+
+def _restore_backup_images(username, image_map):
+    reference_map = {}
+    for reference, image in image_map.items():
+        local_path = urlsplit(reference).path
+        local_prefix = f"/imagenes/{username}/"
+        if not urlsplit(reference).scheme and local_path.startswith(local_prefix):
+            filename = image["filename"]
+            target = user_dir(username) / "imagenes" / filename
+            target.write_bytes(image["content"])
+            reference_map[reference] = f"{local_prefix}{filename}"
+            continue
+
+        object_path = image.get("object_path")
+        if object_path:
+            reference_map[reference] = upload_public_image(
+                object_path, image["content"], image["content_type"]
+            )
+    return reference_map
+
+
+def _replace_image_references(data, reference_map):
+    for collection in ("jugadores", "tecnicos"):
+        for item in data.get(collection, []):
+            record = item.get("data", item)
+            reference = record.get("imagen")
+            if reference in reference_map:
+                record["imagen"] = reference_map[reference]
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def api_backup(request):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    if request.method == "GET":
+        return json_response(_make_backup(username))
+
+    backup, error = json_body(request)
+    if error:
+        return error
+    try:
+        data, images, versions = _normalize_backup(backup, username)
+        reference_map = _restore_backup_images(username, images)
+        _replace_image_references(data, reference_map)
+        for version in versions:
+            _replace_image_references(version["data"], reference_map)
+        _replace_user_data(username, data, versions)
+    except ValueError as failure:
+        return json_response({"error": str(failure)}, 400)
+    except (OSError, RuntimeError) as failure:
+        return json_response(
+            {"error": f"No se pudo restaurar una imagen: {failure}"}, 502
+        )
+    return json_response(
+        {
+            "ok": True,
+            "jugadores": len(data["jugadores"]),
+            "tecnicos": len(data["tecnicos"]),
+            "alineaciones": len(data["plantillas"]),
+            "versiones": len(versions),
+        }
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def api_versions(request):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    if request.method == "GET":
+        versions = SquadSnapshot.query.filter_by(username=username).order_by(
+            SquadSnapshot.created_at.desc(), SquadSnapshot.id.desc()
+        )
+        return json_response(
+            [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "created_at": item.created_at,
+                    "jugadores": len(json.loads(item.data).get("jugadores", [])),
+                    "tecnicos": len(json.loads(item.data).get("tecnicos", [])),
+                }
+                for item in versions
+            ]
+        )
+
+    data, error = json_body(request)
+    if error:
+        return error
+    name = (data.get("name") or "").strip()
+    if not name or len(name) > 120:
+        return json_response(
+            {"error": "El nombre debe tener entre 1 y 120 caracteres."}, 400
+        )
+    snapshot = SquadSnapshot(
+        id=str(uuid.uuid4()),
+        username=username,
+        name=name,
+        created_at=datetime.now().astimezone().isoformat(),
+        data=json.dumps(_user_data(username), ensure_ascii=False),
+    )
+    db.session.add(snapshot)
+    db.session.commit()
+    return json_response(
+        {
+            "id": snapshot.id,
+            "name": snapshot.name,
+            "created_at": snapshot.created_at,
+        },
+        201,
+    )
+
+
+@require_GET
+def api_version_detail(request, snapshot_id):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    snapshot = SquadSnapshot.query.filter_by(
+        username=username, id=snapshot_id
+    ).first()
+    if not snapshot:
+        return json_response({"error": "Versión no encontrada."}, 404)
+    return json_response(
+        {
+            "id": snapshot.id,
+            "name": snapshot.name,
+            "created_at": snapshot.created_at,
+            "data": json.loads(snapshot.data),
+        }
+    )
+
+
+@csrf_exempt
+@require_POST
+def api_restore_version(request, snapshot_id):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    snapshot = SquadSnapshot.query.filter_by(
+        username=username, id=snapshot_id
+    ).first()
+    if not snapshot:
+        return json_response({"error": "Versión no encontrada."}, 404)
+    try:
+        data, _, _ = _normalize_backup(
+            {"format": "efootball-manager-backup", "version": 2, "data": json.loads(snapshot.data)},
+            username,
+        )
+        versions = [
+            {
+                "id": item.id,
+                "name": item.name,
+                "created_at": item.created_at,
+                "data": json.loads(item.data),
+            }
+            for item in SquadSnapshot.query.filter_by(username=username)
+        ]
+        _replace_user_data(username, data, versions)
+    except ValueError as failure:
+        return json_response({"error": str(failure)}, 400)
+    return json_response({"ok": True})
+
+
+@csrf_exempt
+@require_POST
+def api_delete_version(request, snapshot_id):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    snapshot = SquadSnapshot.query.filter_by(
+        username=username, id=snapshot_id
+    ).first()
+    if not snapshot:
+        return json_response({"error": "Versión no encontrada."}, 404)
+    db.session.delete(snapshot)
+    db.session.commit()
+    return json_response({"ok": True})
 
 
 @require_GET
@@ -852,6 +1379,7 @@ def admin_eliminar_usuario(request):
     ProgHistory.query.filter_by(username=username).delete()
     Lineup.query.filter_by(username=username).delete()
     GoalTracker.query.filter_by(username=username).delete()
+    SquadSnapshot.query.filter_by(username=username).delete()
     db.session.delete(user)
     db.session.commit()
     return json_response({"ok": True})

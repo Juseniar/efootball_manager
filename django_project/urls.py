@@ -92,6 +92,23 @@ urlpatterns = [
         dispatch_methods(GET=views.get_goleadores, POST=views.post_goleadores),
         name="goleadores",
     ),
+    path("api/backup", views.api_backup, name="backup"),
+    path("api/versions", views.api_versions, name="versions"),
+    path(
+        "api/versions/<str:snapshot_id>",
+        views.api_version_detail,
+        name="version-detail",
+    ),
+    path(
+        "api/versions/<str:snapshot_id>/restore",
+        views.api_restore_version,
+        name="restore-version",
+    ),
+    path(
+        "api/versions/<str:snapshot_id>/delete",
+        views.api_delete_version,
+        name="delete-version",
+    ),
     path("api/admin/usuarios", views.admin_usuarios, name="admin-usuarios"),
     path(
         "api/admin/reset_pwd",

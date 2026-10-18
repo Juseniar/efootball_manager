@@ -21,6 +21,7 @@ def _request(
     data=None,
     content_type="application/json",
     upsert=False,
+    max_bytes=None,
 ):
     headers = {
         "Authorization": f"Bearer {service_key}",
@@ -36,7 +37,22 @@ def _request(
         headers=headers,
     )
     with urlopen(request, timeout=30) as response:
-        return response.read()
+        content = response.read() if max_bytes is None else response.read(max_bytes + 1)
+        if max_bytes is not None and len(content) > max_bytes:
+            raise RuntimeError("Stored image exceeds the backup size limit.")
+        return content
+
+
+def download_public_image(object_path, max_bytes=10 * 1024 * 1024):
+    base_url, service_key, bucket = _storage_config()
+    encoded_path = quote(object_path, safe="/")
+    return _request(
+        f"{base_url}/storage/v1/object/{quote(bucket, safe='')}/{encoded_path}",
+        service_key,
+        "GET",
+        content_type="application/octet-stream",
+        max_bytes=max_bytes,
+    )
 
 
 def ensure_public_bucket():

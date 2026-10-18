@@ -23,7 +23,18 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.test.client import encode_multipart
 from django_project.database import create_tables, database_app
-from models import Coach, Folder, GoalTracker, History, Lineup, Player, ProgHistory, User, db
+from models import (
+    Coach,
+    Folder,
+    GoalTracker,
+    History,
+    Lineup,
+    Player,
+    ProgHistory,
+    SquadSnapshot,
+    User,
+    db,
+)
 
 
 create_tables()
@@ -49,6 +60,7 @@ class DjangoBackendTests(unittest.TestCase):
         with database_app.app_context():
             for model in (
                 GoalTracker,
+                SquadSnapshot,
                 Lineup,
                 ProgHistory,
                 History,
@@ -221,3 +233,97 @@ class DjangoBackendTests(unittest.TestCase):
         )
         self.assertEqual(login.status_code, 200)
         self.assertEqual(login.json()["nombre"], "Manager")
+
+    def test_backup_restore_replaces_only_current_users_complete_dataset(self):
+        self.register()
+        player = self.client.post("/api/jugadores", data={"nombre": "Delantero"})
+        player_id = player.json()["id"]
+        self.client.post(
+            "/api/goleadores",
+            data=json.dumps({"delanteros": [{"id": player_id, "asistencias": 7}]}),
+            content_type="application/json",
+        )
+        backup = self.client.get("/api/backup")
+        self.assertEqual(backup.status_code, 200)
+        self.assertEqual(backup.json()["format"], "efootball-manager-backup")
+        self.assertEqual(len(backup.json()["data"]["jugadores"]), 1)
+        self.assertEqual(
+            backup.json()["data"]["goleadores"]["delanteros"][0]["asistencias"], 7
+        )
+
+        self.client.delete(f"/api/jugadores/{player_id}")
+        self.assertEqual(self.client.get("/api/jugadores").json(), [])
+        restored = self.client.post(
+            "/api/backup",
+            data=json.dumps(backup.json()),
+            content_type="application/json",
+        )
+        self.assertEqual(restored.status_code, 200, restored.content)
+        self.assertEqual(len(self.client.get("/api/jugadores").json()), 1)
+        self.assertEqual(
+            self.client.get("/api/goleadores").json()["delanteros"][0]["asistencias"],
+            7,
+        )
+
+    def test_invalid_backup_does_not_replace_existing_data(self):
+        self.register()
+        self.client.post("/api/jugadores", data={"nombre": "Conservar"})
+        response = self.client.post(
+            "/api/backup",
+            data=json.dumps({"format": "efootball-manager-backup", "version": 2, "data": {"jugadores": "invalid"}}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.client.get("/api/jugadores").json()[0]["nombre"], "Conservar")
+
+    def test_backup_includes_and_restores_uploaded_player_images(self):
+        self.register()
+        image = SimpleUploadedFile("player.png", b"backup-image-bytes", "image/png")
+        created = self.client.post(
+            "/api/jugadores",
+            data={"nombre": "Con imagen", "imagen": image},
+        )
+        self.assertEqual(created.status_code, 201)
+        backup = self.client.get("/api/backup").json()
+        self.assertEqual(len(backup["images"]), 1)
+        self.assertEqual(
+            backup["images"][0]["content_base64"],
+            "YmFja3VwLWltYWdlLWJ5dGVz",
+        )
+
+        image_name = backup["images"][0]["filename"]
+        image_path = Path(os.environ["DATA_DIR"]) / "usuarios" / "manager" / "imagenes" / image_name
+        image_path.unlink()
+        restored = self.client.post(
+            "/api/backup",
+            data=json.dumps(backup),
+            content_type="application/json",
+        )
+        self.assertEqual(restored.status_code, 200, restored.content)
+        image_response = self.client.get(created.json()["imagen"])
+        self.assertEqual(image_response.status_code, 200)
+        self.assertEqual(b"".join(image_response.streaming_content), b"backup-image-bytes")
+        image_response.close()
+
+    def test_squad_versions_are_user_scoped_comparable_and_restorable(self):
+        self.register()
+        self.client.post("/api/jugadores", data={"nombre": "Versión inicial"})
+        saved = self.client.post(
+            "/api/versions",
+            data=json.dumps({"name": "Antes del cambio"}),
+            content_type="application/json",
+        )
+        self.assertEqual(saved.status_code, 201, saved.content)
+        snapshot_id = saved.json()["id"]
+        self.client.post("/api/jugadores", data={"nombre": "Versión nueva"})
+
+        detail = self.client.get(f"/api/versions/{snapshot_id}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["data"]["jugadores"][0]["data"]["nombre"], "Versión inicial")
+        restored = self.client.post(f"/api/versions/{snapshot_id}/restore")
+        self.assertEqual(restored.status_code, 200, restored.content)
+        self.assertEqual(
+            [item["nombre"] for item in self.client.get("/api/jugadores").json()],
+            ["Versión inicial"],
+        )
+        self.assertEqual(len(self.client.get("/api/versions").json()), 1)
