@@ -6,7 +6,7 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'users'
     username = db.Column(db.String(80), primary_key=True)
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     nombre = db.Column(db.String(120), nullable=False)
     created = db.Column(db.String(50))
     pregunta = db.Column(db.String(255))
@@ -20,6 +20,7 @@ class User(db.Model):
             "pregunta": self.pregunta,
             "respuesta": self.respuesta
         }
+
 
 class Player(db.Model):
     __tablename__ = 'players'
@@ -82,3 +83,19 @@ class GoalTracker(db.Model):
     def parsed_data(self):
         return json.loads(self.data)
 
+
+class MigrationRecord(db.Model):
+    __tablename__ = 'migration_records'
+    source_key = db.Column(db.String(64), primary_key=True)
+    table_name = db.Column(db.String(80), primary_key=True)
+    source_row_id = db.Column(db.String(255), primary_key=True)
+    target_id = db.Column(db.Integer, nullable=False)
+
+
+class MigrationConflict(db.Model):
+    __tablename__ = 'migration_conflicts'
+    source_key = db.Column(db.String(64), primary_key=True)
+    table_name = db.Column(db.String(80), primary_key=True)
+    source_row_id = db.Column(db.String(255), primary_key=True)
+    source_data = db.Column(db.Text, nullable=False)
+    target_data = db.Column(db.Text, nullable=False)

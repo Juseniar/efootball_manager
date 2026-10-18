@@ -1,5 +1,5 @@
 // eFootball Manager - Service Worker v3.1
-const CACHE = 'efm-v3.1';
+const CACHE = 'efm-v3.12';
 const ASSETS = ['/'];
 
 self.addEventListener('install', e => {

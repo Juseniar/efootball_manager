@@ -79,6 +79,19 @@
   flex-wrap: wrap;
 }
 
+.gol-mode-switch {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--borde);
+}
+
+.gol-mode-switch .gol-pill-btn {
+  min-width: 145px;
+  padding: 8px 16px;
+}
+
 .btn-gol-primary {
   background: linear-gradient(135deg, var(--oro), var(--oro2));
   color: #000;
@@ -123,6 +136,22 @@
   border-color: rgba(240, 180, 41, 0.4);
   color: #fff;
   transform: translateY(-1px);
+}
+
+.btn-gol-reset {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+
+.btn-gol-reset:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.75);
+  color: #fff;
+}
+
+.btn-gol-reset:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 /* ── Dashboard de Nivelación & Estrella ── */
@@ -454,6 +483,24 @@
 .gol-carta-wrap .carta {
   width: 100%;
   margin: 0 auto;
+}
+
+.gol-container .carta-pot-indicator {
+  right: 4px;
+  bottom: 4px;
+  gap: 2px;
+  padding: 1px;
+  border-radius: 7px;
+}
+
+.gol-container .carta-pot-light {
+  width: 8px;
+  height: 8px;
+}
+
+.gol-container .carta-pot-light svg {
+  width: 5px;
+  height: 5px;
 }
 
 .btn-cambiar-carta {

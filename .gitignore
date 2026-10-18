@@ -1,0 +1,13 @@
+/dist/
+/.venv/
+/.env
+/.env.*
+!/.env.example
+__pycache__/
+*.py[cod]
+/instance/launcher.log
+/instance/server.log
+/instance/INICIO_ERROR.txt
+/instance/database.before_full_migration.db
+/instance/database.before_player_recovery_*.db
+/instance/mariadb.before_sqlite_merge.db

@@ -631,6 +631,98 @@
       z-index: 2
     }
 
+    .carta-mini-campo {
+      position: relative;
+      width: min(100%, 260px);
+      aspect-ratio: 3 / 4;
+      margin: 0 auto;
+      border: 1px solid rgba(220, 255, 225, .48);
+      border-radius: 6px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(12, 73, 34, .94), rgba(8, 48, 24, .97));
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .25), inset 0 0 12px rgba(0, 0, 0, .18)
+    }
+
+    .jugador-stats-distribucion {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px
+    }
+
+    .jugador-posiciones-panel {
+      width: min(100%, 340px);
+      padding: 12px;
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      background: var(--oscuro)
+    }
+
+    .jugador-posiciones-titulo {
+      margin-bottom: 10px;
+      color: var(--texto);
+      font-size: .72rem;
+      font-weight: 700;
+      text-align: center
+    }
+
+    .jugador-posiciones-ayuda {
+      margin: 9px 0 0;
+      color: var(--apagado);
+      font-size: .65rem;
+      line-height: 1.45;
+      text-align: center
+    }
+
+    .carta-mini-linea {
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+      border-color: rgba(225, 255, 230, .35);
+      border-style: solid
+    }
+
+    .carta-mini-pos {
+      position: absolute;
+      z-index: 1;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      min-height: 23px;
+      padding: 2px 4px;
+      border: 1px solid rgba(112, 167, 121, .42);
+      border-radius: 3px;
+      background: rgba(24, 78, 37, .9);
+      color: rgba(177, 207, 181, .7);
+      font: 700 9px/1.15 Inter, sans-serif;
+      text-align: center;
+      letter-spacing: -.03em;
+      white-space: nowrap;
+      appearance: none;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: background .15s, border-color .15s, color .15s, box-shadow .15s
+    }
+
+    .carta-mini-pos:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 1px
+    }
+
+    .carta-mini-pos:disabled {
+      cursor: default
+    }
+
+    .carta-mini-pos.compatible {
+      border-color: #86ff9b;
+      background: #19d94b;
+      color: #052b10;
+      box-shadow: 0 0 7px rgba(57, 255, 100, .9), 0 0 2px #fff;
+      text-shadow: 0 1px rgba(255, 255, 255, .28)
+    }
+
     .carta-ovr {
       position: absolute;
       top: 8px;
@@ -729,29 +821,58 @@
       display: block
     }
 
-    .carta-pot-dots {
+    .carta-pot-indicator {
       position: absolute;
-      bottom: 26px;
-      right: 10px;
+      bottom: 5px;
+      right: 6px;
       z-index: 5;
       display: flex;
       gap: 3px;
+      padding: 2px;
+      border-radius: 10px;
+      background: rgba(8, 10, 15, .72);
     }
 
-    .pot-dot {
-      width: 8px;
-      height: 8px;
+    .carta-pot-light {
+      width: 12px;
+      height: 12px;
+      display: grid;
+      place-items: center;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(0, 0, 0, 0.4);
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-      transition: all 0.3s ease;
+      color: rgba(190, 205, 215, .48);
+      border: 1px solid rgba(190, 205, 215, .3);
+      background: rgba(8, 10, 15, .85);
+      transition: color .25s, border-color .25s, box-shadow .25s, opacity .25s;
     }
 
-    .pot-dot.active {
-      background: var(--oro);
-      border-color: #000;
-      box-shadow: 0 0 6px var(--oro), inset 0 0 2px rgba(255, 255, 255, 0.5);
+    .carta-pot-light svg {
+      width: 7px;
+      height: 7px;
+      fill: currentColor;
+    }
+
+    .carta-pot-light.active {
+      color: #39ff14;
+      border-color: #39ff14;
+      animation: potenciadorNeon 1.6s ease-in-out infinite;
+    }
+
+    .carta-pot-light.inactive {
+      color: rgba(190, 205, 215, .48);
+      border-color: rgba(190, 205, 215, .3);
+      box-shadow: none;
+      animation: none;
+    }
+
+    @keyframes potenciadorNeon {
+      0%, 100% {
+        opacity: .48;
+        box-shadow: 0 0 2px rgba(57, 255, 20, .35), inset 0 0 2px rgba(57, 255, 20, .18);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 6px #39ff14, 0 0 14px rgba(57, 255, 20, .75), inset 0 0 6px rgba(57, 255, 20, .5);
+      }
     }
 
     .carta-nombre-wrap {
@@ -1099,6 +1220,10 @@
       overflow-y: auto
     }
 
+    #ov-det {
+      padding-top: 100px;
+    }
+
     .modal {
       background: var(--card);
       border: 1px solid var(--borde);
@@ -1216,6 +1341,13 @@
       display: flex;
       gap: 8px;
       margin-top: 12px
+    }
+
+    .form-imagen-ayuda {
+      margin: 6px 0 0;
+      color: var(--apagado);
+      font-size: .72rem;
+      line-height: 1.4
     }
 
     .btn-edit {
@@ -1796,6 +1928,7 @@
 
     .campo-export-bar {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 10px;
       margin-bottom: 12px;
@@ -2206,6 +2339,24 @@
       left: 5px;
       font-size: .42rem;
       padding: 1px 4px
+    }
+
+    .carp-banca-cartas .carta-pot-indicator {
+      right: 4px;
+      bottom: 4px;
+      gap: 2px;
+      padding: 1px;
+      border-radius: 7px;
+    }
+
+    .carp-banca-cartas .carta-pot-light {
+      width: 8px;
+      height: 8px;
+    }
+
+    .carp-banca-cartas .carta-pot-light svg {
+      width: 5px;
+      height: 5px;
     }
 
     .carp-banca-cartas .carta-dorsal {
@@ -3090,6 +3241,20 @@
     @media (max-width: 560px) {
       .stats-3col {
         grid-template-columns: 1fr;
+      }
+
+      .jugador-stats-distribucion {
+        gap: 14px
+      }
+
+      .jugador-posiciones-panel {
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto
+      }
+
+      .carta-mini-campo {
+        width: min(100%, 240px)
       }
     }
 
@@ -3978,6 +4143,35 @@
       background: #fff
     }
 
+    /* Keep the full desktop navigation visible on standard laptop displays. */
+    @media (min-width: 1101px) and (max-width: 1500px) {
+      .header {
+        height: auto;
+        min-height: 56px;
+        padding: 8px 16px;
+        flex-wrap: wrap;
+      }
+
+      .header > .spacer-izq {
+        display: none;
+      }
+
+      #tabs-desktop {
+        order: 10;
+        flex: 0 0 100%;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        overflow: visible;
+      }
+
+      #tabs-desktop .tab {
+        flex-shrink: 1;
+        padding: 7px 10px;
+        font-size: .7rem;
+      }
+    }
+
     /* ── RESPONSIVE GLOBAL ── */
     @media(max-width:1100px) {
       .header {
@@ -3990,10 +4184,9 @@
       .tabs {
         margin-left: 0;
         width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        flex-wrap: nowrap;
+        overflow: visible;
+        flex-wrap: wrap;
+        justify-content: center;
         padding-bottom: 2px
       }
 
@@ -4213,6 +4406,10 @@
       .overlay {
         padding: 72px 8px 8px;
         align-items: flex-start
+      }
+
+      #ov-det {
+        padding-top: 84px;
       }
 
       .modal,
@@ -6324,8 +6521,11 @@
 
     let modoPlantilla = false;
     let plantillaActual = [];
+    let alineacionesPlantilla = [];
+    let alineacionActivaId = null;
     let dragState = null;
     let drawings = [];
+    let formacionActual = '4-2-3-1';
     let drawMode = false;
     let activeTool = "arrow";
     let activeColor = "#ef4444";
@@ -6388,12 +6588,78 @@
       return out;
     }
 
-    // ── Carta ─────────────────────────────────────────────────────────────────────
+    // ── Posiciones compatibles en la ficha del jugador ───────────────────────────
+    function renderMiniCampoJugador(jugador) {
+      if (!jugador.posicion) return '';
+      const jugadorId = String(jugador.jugador_id || jugador.id || '');
+      const posicionesJugador = new Set(
+        POSICIONES.filter(pos => (COMPAT[pos] || [pos]).includes(jugador.posicion))
+      );
+      const posicionesActivas = posicionesMiniCampo.get(jugadorId) || posicionesJugador;
+      const ubicaciones = {
+        PT: [50, 91], LI: [13, 75], DC: [50, 77], LD: [87, 75],
+        MCD: [37, 64], MC: [50, 53], MDI: [17, 49], MDD: [83, 49],
+        MO: [50, 40], EXI: [18, 29], EXD: [82, 29], CAI: [37, 31],
+        CAD: [63, 31], SD: [50, 22], CD: [50, 12]
+      };
+      const marcadores = POSICIONES.map(pos => {
+        const [x, y] = ubicaciones[pos];
+        const compatible = posicionesJugador.has(pos);
+        const activa = posicionesActivas.has(pos);
+        return `<button type="button" class="carta-mini-pos${activa ? ' compatible' : ''}"
+          data-jugador-id="${escaparHtml(jugadorId)}" data-posicion="${pos}"
+          data-compatible="${compatible}" aria-pressed="${activa}"${compatible ? '' : ' disabled'}
+          onclick="togglePosicionMiniCampo(this,event);return false"
+          style="left:${x}%;top:${y}%" title="${pos}${compatible ? ' · compatible por posición' : ''}">${pos}</button>`;
+      }).join('');
+
+      return `<div class="carta-mini-campo" aria-label="Posiciones del jugador: selecciona las compatibles que quieras resaltar">
+        <span class="carta-mini-linea" style="inset:4% 4%;border-width:1px;border-radius:2px"></span>
+        <span class="carta-mini-linea" style="top:50%;left:4%;right:4%;border-width:1px 0 0"></span>
+        <span class="carta-mini-linea" style="top:50%;left:50%;width:20%;aspect-ratio:1;border-width:1px;border-radius:50%;transform:translate(-50%,-50%)"></span>
+        <span class="carta-mini-linea" style="left:27%;right:27%;height:13%;border-width:0 1px 1px;top:4%"></span>
+        <span class="carta-mini-linea" style="left:27%;right:27%;height:13%;border-width:1px 1px 0;bottom:4%"></span>
+        ${marcadores}
+      </div>`;
+    }
+
+    const posicionesMiniCampo = new Map();
+
+    function togglePosicionMiniCampo(boton, evento) {
+      evento.stopPropagation();
+      const jugadorId = boton.dataset.jugadorId;
+      const posicion = boton.dataset.posicion;
+      if (!jugadorId || !POSICIONES.includes(posicion)) return;
+
+      const marcadoresJugador = [...document.querySelectorAll('.carta-mini-pos')]
+        .filter(marcador => marcador.dataset.jugadorId === jugadorId);
+      const seleccionadas = posicionesMiniCampo.has(jugadorId)
+        ? new Set(posicionesMiniCampo.get(jugadorId))
+        : new Set(marcadoresJugador
+          .filter(marcador => marcador.getAttribute('aria-pressed') === 'true')
+          .map(marcador => marcador.dataset.posicion));
+      if (seleccionadas.has(posicion)) seleccionadas.delete(posicion);
+      else seleccionadas.add(posicion);
+      posicionesMiniCampo.set(jugadorId, seleccionadas);
+
+      marcadoresJugador.forEach(marcador => {
+        const activa = seleccionadas.has(marcador.dataset.posicion);
+        marcador.classList.toggle('compatible', activa);
+        marcador.setAttribute('aria-pressed', String(activa));
+      });
+    }
+
     function htmlCarta(j, fnClick = '') {
       const boost = j.base && j.overall && parseInt(j.overall) > parseInt(j.base);
       const sm = statMax(j);
       const click = fnClick ? `onclick="${fnClick}"` : '';
-      const potActivos = potActivosList(j);
+      const potenciadores = [
+        { texto: j.potenciador1_texto, activo: Boolean(j.potenciador1_activo) },
+        { texto: j.potenciador2_texto, activo: Boolean(j.potenciador2_activo) }
+      ];
+      const potTitulo = potenciadores.map((pot, index) =>
+        `Potenciador ${index + 1}: ${pot.activo ? 'activo' : 'apagado'}${pot.texto ? ` (${pot.texto})` : ''}`
+      ).join(' · ');
       return `<div class="carta" ${click}>
     ${j.imagen
           ? `<img src="${j.imagen}" alt="" onerror="this.style.display='none'">`
@@ -6414,9 +6680,14 @@
       <span class="carta-stat-v">${sm.valor}</span>
       <span class="carta-stat-n">${sm.nombre}</span>
     </div>` : ''}
-    <div class="carta-pot-dots" title="${potActivos.length ? 'Potenciadores: ' + potActivos.join(' · ') : 'Sin potenciadores'}">
-      <div class="pot-dot ${potActivos.length > 0 ? 'active' : ''}"></div>
-      <div class="pot-dot ${potActivos.length > 1 ? 'active' : ''}"></div>
+    <div class="carta-pot-indicator" title="${potTitulo}" aria-label="${potTitulo}">
+      ${potenciadores.map((pot, index) => `
+        <span class="carta-pot-light ${pot.activo ? 'active' : 'inactive'}"
+          title="Potenciador ${index + 1}: ${pot.activo ? 'activo' : 'apagado'}${pot.texto ? ` — ${pot.texto}` : ''}"
+          aria-label="Potenciador ${index + 1} ${pot.activo ? 'activo' : 'apagado'}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 11-13h-7l1-7Z"></path></svg>
+        </span>
+      `).join('')}
     </div>
     ${j.dorsal ? `<div class="carta-dorsal">#${j.dorsal}</div>` : ''}
     <div class="carta-nombre-wrap">
@@ -6809,6 +7080,8 @@
       </div>
     </div>`;
 
+      document.getElementById('banner-c').insertAdjacentHTML('beforeend', renderAnalisisPlantilla(tecActual));
+
       // Jugadores con buscador interno
       const q = (document.getElementById('buscar-c')?.value || '').toLowerCase();
       const pos = document.getElementById('filtro-pos-c')?.value || '';
@@ -6923,18 +7196,27 @@
       </div>
     </div>
     <div class="det-body det-cuerpo-anim">
-      <div class="stats-3col">
-        <div class="stats-col">
-          <div class="stats-col-titulo stats-col-ataque">⚔️ Ataque</div>
-          ${SA.map(([k, n]) => renderStat(k, n)).join('')}
-        </div>
-        <div class="stats-col">
-          <div class="stats-col-titulo stats-col-defensa">🛡️ Defensa</div>
-          ${SD.map(([k, n]) => renderStat(k, n)).join('')}
-        </div>
-        <div class="stats-col">
-          <div class="stats-col-titulo stats-col-fuerza">⚡ Fuerza</div>
-          ${SF.map(([k, n]) => renderStat(k, n)).join('')}
+      <div class="jugador-stats-distribucion">
+        <aside class="jugador-posiciones-panel">
+          <div class="jugador-posiciones-titulo">Posiciones compatibles</div>
+          ${j.posicion
+            ? `${renderMiniCampoJugador(j)}
+               <p class="jugador-posiciones-ayuda">Haz clic en una posición compatible para resaltarla u ocultarla.</p>`
+            : '<p class="jugador-posiciones-ayuda">Este jugador no tiene una posición principal asignada.</p>'}
+        </aside>
+        <div class="stats-3col">
+          <div class="stats-col">
+            <div class="stats-col-titulo stats-col-ataque">⚔️ Ataque</div>
+            ${SA.map(([k, n]) => renderStat(k, n)).join('')}
+          </div>
+          <div class="stats-col">
+            <div class="stats-col-titulo stats-col-defensa">🛡️ Defensa</div>
+            ${SD.map(([k, n]) => renderStat(k, n)).join('')}
+          </div>
+          <div class="stats-col">
+            <div class="stats-col-titulo stats-col-fuerza">⚡ Fuerza</div>
+            ${SF.map(([k, n]) => renderStat(k, n)).join('')}
+          </div>
         </div>
       </div>
 
@@ -6971,6 +7253,44 @@
       const j = jugadores.find(x => x.id === id);
       mostrarFormJugador(j);
       cerrar('ov-det');
+    }
+
+    function cambiarImagenJugador(id) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async () => {
+        const imagen = input.files && input.files[0];
+        if (!imagen) return;
+
+        const formData = new FormData();
+        formData.append('imagen', imagen);
+        try {
+          const response = await fetch(`/api/jugadores/${id}/imagen`, {
+            method: 'PATCH',
+            body: formData,
+          });
+          if (!response.ok) {
+            throw new Error(`Error al actualizar imagen: ${response.status} ${await response.text()}`);
+          }
+          const updated = await response.json();
+          const jugador = jugadores.find(x => x.id === id);
+          if (!jugador) throw new Error('No se encontró el jugador actualizado.');
+          jugador.imagen = updated.imagen;
+          renderizar();
+          const preview = document.getElementById('prev-j');
+          if (preview) {
+            const image = document.createElement('img');
+            image.src = updated.imagen;
+            image.className = 'upload-preview';
+            preview.replaceChildren(image);
+          }
+        } catch (error) {
+          console.error(error);
+          alert('No se pudo actualizar la imagen de la carta. Inténtalo de nuevo.');
+        }
+      };
+      input.click();
     }
 
     function editarTecnico(id) {
@@ -7012,6 +7332,10 @@
           : `<p style="color:var(--apagado);font-size:.9rem">📁 Subir imagen de la carta</p>`}
         </div>
       </div>
+      ${j.id ? `<div class="fg full">
+        <button type="button" class="btn-edit" onclick="cambiarImagenJugador('${j.id}')">🖼️ Cambiar imagen</button>
+        <p class="form-imagen-ayuda">Puedes reemplazar la carta sin modificar los demás datos del jugador.</p>
+      </div>` : ''}
       <div class="fg full"><label>Nombre *</label>
         <input type="text" name="nombre" value="${j.nombre || ''}" placeholder="Ej: Iker Casillas" required></div>
       <div class="fg"><label>🔢 Dorsal</label>
@@ -7618,51 +7942,133 @@
       );
     }
 
-    async function buildPlantilla(tid) {
-      const t = tecnicos.find(x => x.id === tid); if (!t) return;
-      const formStr = t.formacion || '4-2-3-1';
-      const lines = DEF_FORM[formStr] || DEF_FORM['4-2-3-1'];
+    function nuevoIdAlineacion() {
+      return globalThis.crypto?.randomUUID?.() || `alineacion-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
 
-      const jugsCarp = carpetas.filter(c => c.tecnico_id === tid).map(c => {
+    function escaparHtml(valor) {
+      return String(valor).replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[caracter]);
+    }
+
+    function cargarDatosAlineacion(tid, alineacion) {
+      const tecnico = tecnicos.find(t => t.id === tid);
+      formacionActual = DEF_FORM[alineacion.formacion]
+        ? alineacion.formacion
+        : tecnico?.formacion || '4-2-3-1';
+      drawings = Array.isArray(alineacion.dibujos) ? [...alineacion.dibujos] : [];
+
+      const lineas = DEF_FORM[formacionActual] || DEF_FORM['4-2-3-1'];
+      const jugsCarpeta = carpetas.filter(c => c.tecnico_id === tid).map(c => {
         const base = jugadores.find(j => j.id === c.jugador_id) || {};
         return { ...base, ...c, cid: c.id };
       });
-
-      // Load saved positions + drawings
-      let savedPos = []; drawings = [];
-      try {
-        const d = await API.getPlantilla(tid);
-        if (d) {
-          const d = await API.getPlantilla(tid);
-          if (Array.isArray(d)) { savedPos = d; }
-          else { savedPos = d.posiciones || []; drawings = d.dibujos || []; }
-        }
-      } catch (e) { }
-
       plantillaActual = [];
-      const positioned = new Set();
+      const colocados = new Set();
 
-      for (const sv of savedPos) {
-        if (plantillaActual.length >= 11) break;
-        const jug = jugsCarp.find(j => j.cid === sv.cid);
-        if (jug) { plantillaActual.push({ ...jug, x: sv.x, y: sv.y, pos: sv.pos }); positioned.add(sv.cid); }
+      for (const guardada of alineacion.posiciones) {
+        if (plantillaActual.length >= 11 || colocados.has(guardada.cid)) continue;
+        const jugador = jugsCarpeta.find(j => j.cid === guardada.cid);
+        if (!jugador) continue;
+        plantillaActual.push({ ...jugador, x: guardada.x, y: guardada.y, pos: guardada.pos });
+        colocados.add(guardada.cid);
       }
 
-      // Auto-assign remaining
-      const remaining = jugsCarp.filter(j => !positioned.has(j.cid));
-      const asig = autoAsignar(lines, remaining);
-      const nL = asig.length;
-      asig.forEach((line, li) => {
-        const yP = nL === 1 ? 50 : 85 - ((85 - 12) / (nL - 1)) * li;
-        line.forEach((item, pi) => {
-          if (!item.jug) return;
-          if (plantillaActual.length >= 11) return;
-          const xP = line.length === 1 ? 50 : 10 + (80 / (line.length - 1)) * pi;
-          plantillaActual.push({ ...item.jug, x: xP, y: yP, pos: item.pos });
+      const asignacion = autoAsignar(lineas, jugsCarpeta.filter(j => !colocados.has(j.cid)));
+      const cantidadLineas = asignacion.length;
+      asignacion.forEach((linea, indiceLinea) => {
+        const y = cantidadLineas === 1 ? 50 : 85 - ((85 - 12) / (cantidadLineas - 1)) * indiceLinea;
+        linea.forEach((item, indiceJugador) => {
+          if (!item.jug || plantillaActual.length >= 11) return;
+          const x = linea.length === 1 ? 50 : 10 + (80 / (linea.length - 1)) * indiceJugador;
+          plantillaActual.push({ ...item.jug, x, y, pos: item.pos });
         });
       });
+    }
 
+    async function buildPlantilla(tid) {
+      const t = tecnicos.find(x => x.id === tid); if (!t) return;
+      const guardada = await API.getPlantilla(tid);
+      const datosGuardados = Array.isArray(guardada) ? { posiciones: guardada } : guardada || {};
+      alineacionesPlantilla = Array.isArray(datosGuardados.alineaciones)
+        ? datosGuardados.alineaciones.filter(a => a && typeof a === 'object').map((a, indice) => ({
+          id: String(a.id || `alineacion-${indice + 1}`),
+          nombre: String(a.nombre || `Alineación ${indice + 1}`),
+          formacion: String(a.formacion || t.formacion || '4-2-3-1'),
+          posiciones: Array.isArray(a.posiciones) ? a.posiciones : [],
+          dibujos: Array.isArray(a.dibujos) ? a.dibujos : []
+        }))
+        : [];
+
+      if (!alineacionesPlantilla.length) {
+        const posiciones = Array.isArray(datosGuardados.posiciones) ? datosGuardados.posiciones : [];
+        alineacionesPlantilla = [{
+          id: 'principal',
+          nombre: 'Plantilla principal',
+          formacion: datosGuardados.formacion || t.formacion || '4-2-3-1',
+          posiciones,
+          dibujos: Array.isArray(datosGuardados.dibujos) ? datosGuardados.dibujos : []
+        }];
+      }
+
+      alineacionActivaId = String(datosGuardados.alineacion_activa || alineacionesPlantilla[0].id);
+      if (!alineacionesPlantilla.some(a => a.id === alineacionActivaId)) {
+        alineacionActivaId = alineacionesPlantilla[0].id;
+      }
+      cargarDatosAlineacion(tid, alineacionesPlantilla.find(a => a.id === alineacionActivaId));
       renderCampo(tid);
+      await guardarPlantilla(tid);
+    }
+
+    async function cambiarAlineacion(tid, id) {
+      const alineacion = alineacionesPlantilla.find(a => a.id === id);
+      if (!alineacion || id === alineacionActivaId) return;
+      await guardarPlantilla(tid);
+      alineacionActivaId = alineacion.id;
+      cargarDatosAlineacion(tid, alineacion);
+      renderCampo(tid);
+      await guardarPlantilla(tid);
+    }
+
+    async function guardarComoNuevaAlineacion(tid) {
+      const nombre = prompt('Nombre para esta alineación:');
+      if (nombre === null) return;
+      const nombreLimpio = nombre.trim().slice(0, 40);
+      if (!nombreLimpio) {
+        alert('Escribe un nombre para guardar la alineación.');
+        return;
+      }
+
+      const alineacion = {
+        id: nuevoIdAlineacion(),
+        nombre: nombreLimpio,
+        formacion: formacionActual,
+        posiciones: plantillaActual.map(p => ({
+          cid: p.cid, jugador_id: p.jugador_id, x: p.x, y: p.y, pos: p.pos || p.posicion || ''
+        })),
+        dibujos: [...drawings]
+      };
+      alineacionesPlantilla.push(alineacion);
+      alineacionActivaId = alineacion.id;
+      renderCampo(tid);
+      await guardarPlantilla(tid);
+    }
+
+    async function eliminarAlineacion(tid) {
+      if (alineacionesPlantilla.length <= 1) {
+        alert('Cada técnico debe conservar al menos una alineación.');
+        return;
+      }
+      const alineacion = alineacionesPlantilla.find(a => a.id === alineacionActivaId);
+      if (!alineacion || !confirm(`¿Eliminar la alineación "${alineacion.nombre}"?`)) return;
+
+      alineacionesPlantilla = alineacionesPlantilla.filter(a => a.id !== alineacionActivaId);
+      const siguiente = alineacionesPlantilla[0];
+      alineacionActivaId = siguiente.id;
+      cargarDatosAlineacion(tid, siguiente);
+      renderCampo(tid);
+      await guardarPlantilla(tid);
     }
 
     function svgShapes() {
@@ -7739,7 +8145,17 @@
       document.getElementById('campo-c').innerHTML = `
     <div class="campo-wrap">
       <div class="campo-export-bar">
-        <span class="campo-titulo-text">🏟️ ${t.formacion || '4-2-3-1'}</span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--texto)">
+          Alineación
+          <select class="filtro" aria-label="Seleccionar alineación guardada"
+            onchange="cambiarAlineacion('${t.id}', this.value)">
+            ${alineacionesPlantilla.map(a => `<option value="${escaparHtml(a.id)}" ${a.id === alineacionActivaId ? 'selected' : ''}>${escaparHtml(a.nombre)}</option>`).join('')}
+          </select>
+        </label>
+        <button class="btn-sm btn-sm-oro" onclick="guardarComoNuevaAlineacion('${t.id}')">💾 Guardar como...</button>
+        <button class="btn-sm" style="background:#ef4444;color:#fff"
+          onclick="eliminarAlineacion('${t.id}')">🗑️ Eliminar alineación</button>
+        <span class="campo-titulo-text">🏟️ ${formacionActual || t.formacion || '4-2-3-1'}</span>
         <button class="btn-sm" style="background:#6366f1;color:#fff"
           onclick="togglePizarra('${tid}')">✏️ Pizarra</button>
         <button class="btn-sm" style="background:#10b981;color:#fff"
@@ -7842,9 +8258,25 @@
     async function guardarPlantilla(tid) {
       if (!tid) return;
       const posiciones = plantillaActual.map(p => ({ cid: p.cid, jugador_id: p.jugador_id, x: p.x, y: p.y, pos: p.pos || p.posicion || '' }));
-      await fetch(`/api/plantillas/${tid}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ posiciones, dibujos: drawings })
+      let alineacion = alineacionesPlantilla.find(a => a.id === alineacionActivaId);
+      if (!alineacion) {
+        alineacion = {
+          id: nuevoIdAlineacion(),
+          nombre: 'Plantilla principal',
+          formacion: formacionActual,
+          posiciones: [],
+          dibujos: []
+        };
+        alineacionesPlantilla = [alineacion];
+        alineacionActivaId = alineacion.id;
+      }
+      Object.assign(alineacion, { formacion: formacionActual, posiciones, dibujos: [...drawings] });
+      await API.savePlantilla(tid, {
+        posiciones,
+        dibujos: [...drawings],
+        formacion: formacionActual,
+        alineaciones: alineacionesPlantilla,
+        alineacion_activa: alineacionActivaId
       });
     }
 
@@ -7852,7 +8284,7 @@
     async function forzarMejor11(tid) {
       if (!confirm('¿Generar el Mejor 11? Esto reemplazará la formación actual en la pizarra.')) return;
       const t = tecnicos.find(x => x.id === tid); if (!t) return;
-      const formStr = t.formacion || '4-2-3-1';
+      const formStr = formacionActual || t.formacion || '4-2-3-1';
       const lines = DEF_FORM[formStr] || DEF_FORM['4-2-3-1'];
 
       const jugsCarp = carpetas.filter(c => c.tecnico_id === tid).map(c => {
@@ -8433,6 +8865,15 @@
     function calcularXI(formStr) {
       const lines = DEF_FORM[formStr] || DEF_FORM['4-2-3-1'];
       const sorted = [...jugadores].sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0));
+      const identidadJugador = jugador => {
+        const nombre = String(jugador.nombre || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
+        return nombre || `id:${jugador.id}`;
+      };
       const usados = new Set();
       const titulares = [];
       const nL = lines.length;
@@ -8441,14 +8882,21 @@
         const yP = nL === 1 ? 50 : 85 - ((85 - 12) / (nL - 1)) * li;
         line.forEach((pos, pi) => {
           const compat = COMPAT[pos] || [pos];
-          const jug = sorted.find(j => !usados.has(j.id) && compat.includes(j.posicion));
+          const jug = sorted.find(j => !usados.has(identidadJugador(j)) && compat.includes(j.posicion));
           const xP = line.length === 1 ? 50 : 10 + (80 / (line.length - 1)) * pi;
-          if (jug) { usados.add(jug.id); titulares.push({ ...jug, x: xP, y: yP, pos }); }
+          if (jug) { usados.add(identidadJugador(jug)); titulares.push({ ...jug, x: xP, y: yP, pos }); }
           else titulares.push({ x: xP, y: yP, pos, vacio: true });
         });
       });
 
-      const suplentes = sorted.filter(j => !usados.has(j.id)).slice(0, 7);
+      const suplentes = [];
+      for (const jugador of sorted) {
+        const identidad = identidadJugador(jugador);
+        if (usados.has(identidad)) continue;
+        usados.add(identidad);
+        suplentes.push(jugador);
+        if (suplentes.length === 7) break;
+      }
       return { titulares, suplentes };
     }
 
@@ -8562,6 +9010,80 @@
       renderCarpeta();
     }
 
+    function renderAnalisisPlantilla(tid) {
+      const tecnico = tecnicos.find(t => t.id === tid);
+      const formacion = tecnico?.formacion || '4-2-3-1';
+      const lineas = DEF_FORM[formacion] || DEF_FORM['4-2-3-1'];
+      const requisitos = new Map();
+      lineas.flat().forEach(pos => requisitos.set(pos, (requisitos.get(pos) || 0) + 1));
+      const plantilla = carpetas.filter(c => c.tecnico_id === tid).map(c => ({
+        ...(jugadores.find(j => j.id === c.jugador_id) || {}),
+        ...c
+      }));
+
+      if (!plantilla.length) {
+        return `<section style="margin:18px 0;padding:16px;background:var(--card);border:1px solid var(--borde);border-radius:12px">
+          <h3 style="margin:0 0 6px;color:var(--oro)">📊 Análisis de plantilla</h3>
+          <p style="margin:0;color:var(--apagado);font-size:.85rem">Agrega jugadores a la carpeta para analizar la cobertura de posiciones.</p>
+        </section>`;
+      }
+
+      const resumen = [...requisitos].map(([pos, titularesNecesarios]) => {
+        const opcionesUnicas = new Map();
+        plantilla.filter(j => (COMPAT[pos] || [pos]).includes(j.posicion)).forEach(jugador => {
+          const nombre = String(jugador.nombre || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .replace(/\s+/g, ' ')
+            .toLowerCase();
+          const id = nombre || `id:${jugador.jugador_id || jugador.id}`;
+          const anterior = opcionesUnicas.get(id);
+          if (!anterior || (parseInt(jugador.overall) || 0) > (parseInt(anterior.overall) || 0)) {
+            opcionesUnicas.set(id, jugador);
+          }
+        });
+        const opciones = [...opcionesUnicas.values()]
+          .sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0));
+        const especialistas = opciones.filter(j => j.posicion === pos);
+        const alternativas = opciones.filter(j => j.posicion !== pos);
+        const titularesDisponibles = Math.min(titularesNecesarios, opciones.length);
+        const suplentesDisponibles = Math.max(0, opciones.length - titularesNecesarios);
+        const promedioTitulares = opciones.slice(0, titularesNecesarios).reduce(
+          (total, j) => total + (parseInt(j.overall) || 0), 0
+        ) / titularesNecesarios;
+        const bienCubierta = titularesDisponibles === titularesNecesarios &&
+          suplentesDisponibles > 0 && promedioTitulares >= 85;
+        const mejorar = titularesDisponibles < titularesNecesarios || promedioTitulares < 80;
+        const estado = bienCubierta ? 'bien' : mejorar ? 'mejorar' : 'suplente';
+        const etiqueta = estado === 'bien' ? '✅ Bien cubierta' :
+          estado === 'suplente' ? '🪑 Falta suplente' : '⚠️ Necesita mejorar';
+        const color = estado === 'bien' ? 'var(--verde)' :
+          estado === 'suplente' ? 'var(--oro)' : 'var(--rojo)';
+        const detalle = `${especialistas.length} especialista${especialistas.length === 1 ? '' : 's'} · ${alternativas.length} alternativa${alternativas.length === 1 ? '' : 's'}`;
+
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--oscuro);border:1px solid var(--borde);border-radius:8px">
+          <div>
+            <strong>${pos}</strong>
+            <div style="font-size:.72rem;color:var(--apagado);margin-top:3px">${detalle} · OVR medio titulares: ${promedioTitulares.toFixed(1)}</div>
+          </div>
+          <div style="text-align:right;white-space:nowrap">
+            <div style="font-size:.72rem;color:var(--texto);margin-bottom:4px">Titulares: <b>${titularesDisponibles}/${titularesNecesarios}</b> · Suplentes: <b>${suplentesDisponibles}</b></div>
+            <div style="font-size:.76rem;font-weight:700;color:${color}">${etiqueta}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<section style="margin:18px 0;padding:16px;background:var(--card);border:1px solid var(--borde);border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <h3 style="margin:0;color:var(--oro)">📊 Análisis de plantilla</h3>
+          <span style="font-size:.76rem;color:var(--apagado)">Formación ${formacion} · posiciones requeridas</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px">${resumen}</div>
+        <p style="margin:10px 0 0;font-size:.72rem;color:var(--apagado)">Titulares muestra cuántos puestos de esa posición puede cubrir la plantilla frente a los que exige la formación. Suplentes cuenta los jugadores compatibles que sobran; los jugadores repetidos por sus distintas cartas solo cuentan una vez. Verde: hay suplentes y el OVR medio titular es 85+. Amarillo: los titulares están cubiertos, pero falta profundidad o el OVR medio es 80–84.9. Rojo: faltan titulares o el OVR medio es menor de 80.</p>
+      </section>`;
+    }
+
     // ── MEJOR XI EN CARPETA ───────────────────────────────────────────────────────
     function renderXIEnCarpeta(tid) {
       const t = tecnicos.find(x => x.id === tid);
@@ -8575,6 +9097,15 @@
       if (!jugsCarp.length) return { campoHtml: `<p style="color:var(--apagado);font-size:.85rem;padding:8px 0">Añade jugadores a la carpeta para ver el Mejor XI.</p>`, supsHtml: '' };
 
       const sorted = [...jugsCarp].sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0));
+      const identidadJugador = jugador => {
+        const nombre = String(jugador.nombre || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
+        return nombre || `id:${jugador.jugador_id || jugador.id || jugador.cid}`;
+      };
       const usados = new Set();
       const titulares = [];
       const nL = lines.length;
@@ -8583,14 +9114,21 @@
         const yP = nL === 1 ? 50 : 85 - ((85 - 12) / (nL - 1)) * li;
         line.forEach((pos, pi) => {
           const compat = COMPAT[pos] || [pos];
-          const jug = sorted.find(j => !usados.has(j.cid) && compat.includes(j.posicion));
+          const jug = sorted.find(j => !usados.has(identidadJugador(j)) && compat.includes(j.posicion));
           const xP = line.length === 1 ? 50 : 10 + (80 / (line.length - 1)) * pi;
-          if (jug) { usados.add(jug.cid); titulares.push({ ...jug, x: xP, y: yP, pos }); }
+          if (jug) { usados.add(identidadJugador(jug)); titulares.push({ ...jug, x: xP, y: yP, pos }); }
           else titulares.push({ x: xP, y: yP, pos, vacio: true });
         });
       });
 
-      const suplentes = sorted.filter(j => !usados.has(j.cid)).slice(0, 12);
+      const suplentes = [];
+      for (const jugador of sorted) {
+        const identidad = identidadJugador(jugador);
+        if (usados.has(identidad)) continue;
+        usados.add(identidad);
+        suplentes.push(jugador);
+        if (suplentes.length === 12) break;
+      }
       const prom = Math.round(titulares.filter(p => !p.vacio).reduce((s, p) => s + (parseInt(p.overall) || 0), 0) / Math.max(1, titulares.filter(p => !p.vacio).length));
 
       const fieldSvg = `<svg viewBox="0 0 460 620" xmlns="http://www.w3.org/2000/svg"

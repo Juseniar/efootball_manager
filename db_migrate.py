@@ -1,109 +1,277 @@
+import hashlib
 import json
+import os
 from pathlib import Path
-from app import app, db
-from models import User, Player, Coach, Folder, History, ProgHistory, Lineup
 
-BASE_DIR = Path("efootball_data")
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-def leer_d(p):
-    if not p.exists(): return {}
+from migrate_database import normalize_database_url
+from models import (
+    Coach,
+    Folder,
+    GoalTracker,
+    History,
+    Lineup,
+    MigrationRecord,
+    Player,
+    ProgHistory,
+    User,
+    db,
+)
+
+
+BASE_DIR = Path(os.environ.get("DATA_DIR", "efootball_data"))
+MODELS = (User, Player, Coach, Folder, History, ProgHistory, Lineup, GoalTracker)
+COLLECTIONS = (
+    ("jugadores.json", Player),
+    ("tecnicos.json", Coach),
+    ("carpetas.json", Folder),
+)
+
+
+def read_json(path, expected_type, default):
+    if not path.exists():
+        return default
     try:
-        d = json.loads(p.read_text(encoding="utf-8"))
-        return d if isinstance(d, dict) else {}
-    except: return {}
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"Invalid JSON in {path}: {error}") from error
+    if not isinstance(value, expected_type):
+        raise ValueError(
+            f"Expected {expected_type.__name__} in {path}, "
+            f"found {type(value).__name__}."
+        )
+    return value
 
-def leer(p):
-    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
+
+def encode_json(value):
+    return json.dumps(value, ensure_ascii=False)
+
+
+def get_json_source_key(path):
+    identity = f"json:{path.resolve()}"
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
+def add_if_missing(session, model, identity, values, stats):
+    existing = session.get(model, identity)
+    if existing is None:
+        session.add(model(**values))
+        stats["inserted"] += 1
+        return
+
+    if any(getattr(existing, key) != value for key, value in values.items()):
+        stats["conflicts"] += 1
+
+
+def add_goal_tracker_if_missing(session, username, values, stats):
+    existing = session.get(GoalTracker, username)
+    if existing is None:
+        session.add(GoalTracker(**values))
+        stats["inserted"] += 1
+        return
+
+    current_data = json.loads(existing.data)
+    source_data = json.loads(values["data"])
+    tracked_collections = (
+        "delanteros",
+        "historial_partidos",
+        "temporadas_archivadas",
+    )
+    current_has_records = any(current_data.get(key) for key in tracked_collections)
+    source_has_records = any(source_data.get(key) for key in tracked_collections)
+
+    if not current_has_records and source_has_records:
+        existing.data = values["data"]
+        stats["restored"] += 1
+    elif existing.data != values["data"]:
+        stats["conflicts"] += 1
+
+
+def import_user_directory(session, username, directory, stats):
+    for filename, model in COLLECTIONS:
+        for record in read_json(directory / filename, list, []):
+            if not isinstance(record, dict):
+                raise ValueError(f"Expected an object in {directory / filename}.")
+            record_id = record.get("id")
+            if record_id is None or str(record_id) == "":
+                raise ValueError(
+                    f"Record without an id in {directory / filename}; "
+                    "nothing was imported."
+                )
+            record_id = str(record_id)
+            if len(record_id) > 20:
+                raise ValueError(
+                    f"Record id exceeds 20 characters in {directory / filename}."
+                )
+            values = {
+                "username": username,
+                "id": record_id,
+                "data": encode_json(record),
+            }
+            add_if_missing(session, model, (username, record_id), values, stats)
+
+    for filename, model in (
+        ("historial.json", History),
+        ("prog_historial.json", ProgHistory),
+    ):
+        histories = read_json(directory / filename, dict, {})
+        source_key = get_json_source_key(directory / filename)
+        for player_id, snapshots in histories.items():
+            if not isinstance(snapshots, list):
+                raise ValueError(
+                    f"Expected a list of snapshots for {player_id} in "
+                    f"{directory / filename}."
+                )
+            occurrences = {}
+            for snapshot_index in reversed(range(len(snapshots))):
+                snapshot = snapshots[snapshot_index]
+                if not isinstance(snapshot, dict):
+                    raise ValueError(
+                        f"Expected an object snapshot for {player_id} in "
+                        f"{directory / filename}."
+                    )
+                values = {
+                    "username": username,
+                    "player_id": str(player_id),
+                    "snapshot": encode_json(snapshot),
+                    "created_at": snapshot.get("_ts", ""),
+                }
+                source_row_id = f"{player_id}:{snapshot_index}"
+                migration_identity = (source_key, model.__tablename__, source_row_id)
+                if session.get(MigrationRecord, migration_identity):
+                    continue
+
+                natural_key = tuple(values.values())
+                occurrence = occurrences.get(natural_key, 0)
+                occurrences[natural_key] = occurrence + 1
+                matching_rows = (
+                    session.query(model)
+                    .filter_by(**values)
+                    .order_by(model.id)
+                    .all()
+                )
+                if len(matching_rows) > occurrence:
+                    target_id = matching_rows[occurrence].id
+                else:
+                    migrated_row = model(**values)
+                    session.add(migrated_row)
+                    session.flush()
+                    target_id = migrated_row.id
+                    stats["inserted"] += 1
+                session.add(
+                    MigrationRecord(
+                        source_key=source_key,
+                        table_name=model.__tablename__,
+                        source_row_id=source_row_id,
+                        target_id=target_id,
+                    )
+                )
+
+    lineups = read_json(directory / "plantillas.json", dict, {})
+    for coach_id, data in lineups.items():
+        values = {
+            "username": username,
+            "coach_id": str(coach_id),
+            "data": encode_json(data),
+        }
+        add_if_missing(
+            session,
+            Lineup,
+            (username, str(coach_id)),
+            values,
+            stats,
+        )
+
+    goals = read_json(directory / "goleadores.json", dict, {})
+    if goals:
+        values = {"username": username, "data": encode_json(goals)}
+        add_goal_tracker_if_missing(session, username, values, stats)
+
 
 def migrate():
-    with app.app_context():
-        db.create_all()
-        
-        # Usuarios
-        usuarios_file = BASE_DIR / "usuarios.json"
-        usuarios = leer_d(usuarios_file)
-        
-        for username, data in usuarios.items():
-            if not db.session.get(User, username):
-                u = User(
-                    username=username,
-                    password=data.get("password", ""),
-                    nombre=data.get("nombre", username),
-                    created=data.get("created", ""),
-                    pregunta=data.get("pregunta"),
-                    respuesta=data.get("respuesta")
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError(
+            "Set DATABASE_URL to the destination database before importing JSON."
+        )
+
+    users_file = BASE_DIR / "usuarios.json"
+    users = read_json(users_file, dict, {})
+    users_dir = BASE_DIR / "usuarios"
+    legacy_files = (
+        "jugadores.json",
+        "tecnicos.json",
+        "carpetas.json",
+        "plantillas.json",
+        "historial.json",
+        "prog_historial.json",
+        "goleadores.json",
+    )
+    has_legacy_data = any((BASE_DIR / filename).exists() for filename in legacy_files)
+
+    for username, user_data in users.items():
+        if not isinstance(user_data, dict) or not user_data.get("password"):
+            raise ValueError(f"User {username!r} has no valid password in {users_file}.")
+        if len(username) > 80:
+            raise ValueError(f"Username exceeds 80 characters in {users_file}.")
+
+    directories = []
+    if users_dir.exists():
+        for user_directory in sorted(users_dir.iterdir()):
+            if not user_directory.is_dir():
+                continue
+            if user_directory.name not in users:
+                raise ValueError(
+                    f"Data directory {user_directory} has no matching account in "
+                    f"{users_file}; create or restore that account before importing."
                 )
-                db.session.add(u)
-        db.session.commit()
-        print(f"Migrados {len(usuarios)} usuarios.")
+            directories.append((user_directory.name, user_directory))
 
-        # Por cada usuario, migrar sus archivos
-        users_dir = BASE_DIR / "usuarios"
-        if users_dir.exists():
-            for user_path in users_dir.iterdir():
-                if user_path.is_dir():
-                    username = user_path.name
-                    if not db.session.get(User, username):
-                        print(f"Usuario {username} no está en usuarios.json. Saltando.")
-                        continue
-                        
-                    def migrar_directorio(d_path, uname):
-                        # Jugadores
-                        jugadores = leer(d_path / "jugadores.json")
-                        for j in jugadores:
-                            jid = j.get("id")
-                            if jid and not Player.query.filter_by(username=uname, id=jid).first():
-                                db.session.add(Player(username=uname, id=jid, data=json.dumps(j, ensure_ascii=False)))
-                                
-                        # Tecnicos
-                        tecnicos = leer(d_path / "tecnicos.json")
-                        for t in tecnicos:
-                            tid = t.get("id")
-                            if tid and not Coach.query.filter_by(username=uname, id=tid).first():
-                                db.session.add(Coach(username=uname, id=tid, data=json.dumps(t, ensure_ascii=False)))
-                                
-                        # Carpetas
-                        carpetas = leer(d_path / "carpetas.json")
-                        for c in carpetas:
-                            cid = c.get("id")
-                            if cid and not Folder.query.filter_by(username=uname, id=cid).first():
-                                db.session.add(Folder(username=uname, id=cid, data=json.dumps(c, ensure_ascii=False)))
-                                
-                        # Historial
-                        historial = leer_d(d_path / "historial.json")
-                        for jid, snaps in historial.items():
-                            for snap in reversed(snaps): 
-                                created_at = snap.get("_ts", "")
-                                db.session.add(History(username=uname, player_id=jid, snapshot=json.dumps(snap, ensure_ascii=False), created_at=created_at))
-                                
-                        # Prog Historial
-                        prog = leer_d(d_path / "prog_historial.json")
-                        for jid, snaps in prog.items():
-                            for snap in reversed(snaps):
-                                created_at = snap.get("_ts", "")
-                                db.session.add(ProgHistory(username=uname, player_id=jid, snapshot=json.dumps(snap, ensure_ascii=False), created_at=created_at))
-                                
-                        # Plantillas
-                        plantillas = leer_d(d_path / "plantillas.json")
-                        for tid, data in plantillas.items():
-                            if not Lineup.query.filter_by(username=uname, coach_id=tid).first():
-                                db.session.add(Lineup(username=uname, coach_id=tid, data=json.dumps(data, ensure_ascii=False)))
-                                
-                        db.session.commit()
-                    
-                    migrar_directorio(user_path, username)
-                    print(f"Migrados datos de usuario: {username}")
-        
-        # Migrar datos antiguos en la raíz (legacy) al usuario 'admin' si existen
-        if (BASE_DIR / "jugadores.json").exists():
-            admin_user = db.session.get(User, "admin")
-            if admin_user:
-                print("Se encontraron datos antiguos en la raíz, migrándolos al usuario 'admin'...")
-                migrar_directorio(BASE_DIR, "admin")
-            else:
-                print("Se encontraron datos antiguos en la raíz pero no existe el usuario 'admin'.")
+    if has_legacy_data and "admin" not in users:
+        raise ValueError(
+            f"Legacy game data exists in {BASE_DIR}, but no admin account exists "
+            f"in {users_file}; nothing was imported."
+        )
 
-        print("Migración completada exitosamente.")
+    engine = create_engine(normalize_database_url(database_url), pool_pre_ping=True)
+    Session = sessionmaker(bind=engine)
+    stats = {"inserted": 0, "restored": 0, "conflicts": 0}
+    db.metadata.create_all(engine)
+
+    try:
+        with Session.begin() as session:
+            for username, user_data in users.items():
+                values = {
+                    "username": username,
+                    "password": user_data["password"],
+                    "nombre": user_data.get("nombre") or username,
+                    "created": user_data.get("created", ""),
+                    "pregunta": user_data.get("pregunta"),
+                    "respuesta": user_data.get("respuesta"),
+                }
+                add_if_missing(session, User, username, values, stats)
+
+            for username, directory in directories:
+                import_user_directory(session, username, directory, stats)
+
+            if has_legacy_data:
+                import_user_directory(session, "admin", BASE_DIR, stats)
+    finally:
+        engine.dispose()
+
+    print(f"JSON records inserted: {stats['inserted']}.")
+    if stats["restored"]:
+        print(f"Empty scorer records restored: {stats['restored']}.")
+    if stats["conflicts"]:
+        raise RuntimeError(
+            f"Import completed without overwriting existing rows, but found "
+            f"{stats['conflicts']} conflicting records. Review those records "
+            "before considering the migration complete."
+        )
+    print("JSON migration complete. Original files were not modified.")
+
 
 if __name__ == "__main__":
     migrate()

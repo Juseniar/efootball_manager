@@ -13,13 +13,17 @@
     estrella_id: null,
     meta_modo: 'max', // 'max' (automático al mayor regular) o 'fija'
     meta_fija: 20,
+    asistente_estrella_id: null,
+    asistencias_meta_modo: 'max',
+    asistencias_meta_fija: 20,
     temporada: 'Temporada Actual',
-    historial_partidos: []
+    historial_partidos: [],
+    temporadas_archivadas: []
   };
 
   let gFiltro = 'todos';
   let gBusqueda = '';
-  let gAudioCtx = null;
+  let gModoEstadistica = 'goles';
   let gPickerJugadorSeleccionado = null;
   let gPickerModo = 'agregar'; // 'agregar' o 'cambiar'
   let gPickerTargetId = null;
@@ -27,43 +31,6 @@
   let gSyncError = '';
   let gRosterError = '';
   let gPlantillaCargada = false;
-
-  // ── Sonido de gol (Web Audio API nativo) ─────────────────────────────────────
-  function playGoalSound() {
-    try {
-      if (!gAudioCtx) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) gAudioCtx = new AudioCtx();
-      }
-      if (!gAudioCtx) return;
-      if (gAudioCtx.state === 'suspended') gAudioCtx.resume();
-
-      const now = gAudioCtx.currentTime;
-      const osc1 = gAudioCtx.createOscillator();
-      const gain1 = gAudioCtx.createGain();
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(523.25, now);
-      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
-      gain1.gain.setValueAtTime(0.18, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc1.connect(gain1);
-      gain1.connect(gAudioCtx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.35);
-
-      const osc2 = gAudioCtx.createOscillator();
-      const gain2 = gAudioCtx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(783.99, now + 0.08);
-      osc2.frequency.exponentialRampToValueAtTime(1046.50, now + 0.22);
-      gain2.gain.setValueAtTime(0.15, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-      osc2.connect(gain2);
-      gain2.connect(gAudioCtx.destination);
-      osc2.start(now + 0.08);
-      osc2.stop(now + 0.45);
-    } catch (e) { }
-  }
 
   // ── Carga y Persistencia ────────────────────────────────────────────────────
   async function cargarGoleadores() {
@@ -119,6 +86,8 @@
 
   function normalizarTotales() {
     if (!Array.isArray(gState.delanteros)) gState.delanteros = [];
+    if (!Array.isArray(gState.historial_partidos)) gState.historial_partidos = [];
+    if (!Array.isArray(gState.temporadas_archivadas)) gState.temporadas_archivadas = [];
     gState.delanteros.forEach(d => {
       d.goles_base = parseInt(d.goles_base, 10) || 0;
       d.goles_nuevos = parseInt(d.goles_nuevos, 10) || 0;
@@ -128,34 +97,79 @@
       d.asistencias_totales = d.asistencias_base + d.asistencias_nuevas;
     });
 
-    if (!gState.estrella_id && gState.delanteros.length > 0) {
+    if (!['max', 'fija'].includes(gState.asistencias_meta_modo)) {
+      gState.asistencias_meta_modo = 'max';
+    }
+    gState.asistencias_meta_fija = parseInt(gState.asistencias_meta_fija, 10) || 20;
+
+    if (!gState.delanteros.some(d => d.id === gState.estrella_id)) {
       const estrella = gState.delanteros.find(d => d.es_estrella) || gState.delanteros[0];
-      gState.estrella_id = estrella.id;
-      gState.delanteros.forEach(d => d.es_estrella = (d.id === estrella.id));
-    } else {
-      gState.delanteros.forEach(d => d.es_estrella = (d.id === gState.estrella_id));
+      gState.estrella_id = estrella ? estrella.id : null;
+    }
+    gState.delanteros.forEach(d => d.es_estrella = (d.id === gState.estrella_id));
+
+    if (!gState.delanteros.some(d => d.id === gState.asistente_estrella_id)) {
+      gState.asistente_estrella_id = gState.estrella_id
+        || (gState.delanteros[0] ? gState.delanteros[0].id : null);
     }
   }
+
+  function configEstadistica() {
+    return gModoEstadistica === 'asistencias'
+      ? {
+        base: 'asistencias_base',
+        nuevos: 'asistencias_nuevas',
+        total: 'asistencias_totales',
+        estrella: 'asistente_estrella_id',
+        metaModo: 'asistencias_meta_modo',
+        metaFija: 'asistencias_meta_fija',
+        singular: 'asistencia',
+        plural: 'asistencias',
+        mayuscula: 'Asistencias',
+        icono: '🎯'
+      }
+      : {
+        base: 'goles_base',
+        nuevos: 'goles_nuevos',
+        total: 'goles_totales',
+        estrella: 'estrella_id',
+        metaModo: 'meta_modo',
+        metaFija: 'meta_fija',
+        singular: 'gol',
+        plural: 'goles',
+        mayuscula: 'Goles',
+        icono: '⚽'
+      };
+  }
+
+  window.cambiarModoEstadistica = function (modo) {
+    if (!['goles', 'asistencias'].includes(modo)) return;
+    gModoEstadistica = modo;
+    gFiltro = 'todos';
+    window.renderGoleadores();
+  };
 
   // ── Cálculos de Nivelación y Métricas ──────────────────────────────────────
   function calcularMetricas() {
     normalizarTotales();
-    const estrella = gState.delanteros.find(d => d.id === gState.estrella_id) || gState.delanteros[0] || null;
+    const config = configEstadistica();
+    const estrella = gState.delanteros.find(d => d.id === gState[config.estrella])
+      || gState.delanteros[0] || null;
     const regulares = gState.delanteros.filter(d => d.id !== (estrella ? estrella.id : null));
 
     let meta = 0;
-    if (gState.meta_modo === 'fija') {
-      meta = parseInt(gState.meta_fija, 10) || 20;
+    if (gState[config.metaModo] === 'fija') {
+      meta = parseInt(gState[config.metaFija], 10) || 20;
     } else {
-      meta = regulares.reduce((max, d) => Math.max(max, d.goles_totales), 0);
+      meta = regulares.reduce((max, d) => Math.max(max, d[config.total]), 0);
     }
 
-    let totalGolesEquipo = gState.delanteros.reduce((sum, d) => sum + d.goles_totales, 0);
+    const totalEquipo = gState.delanteros.reduce((sum, d) => sum + d[config.total], 0);
     let totalFaltan = 0;
     let niveladosCount = 0;
 
     regulares.forEach(d => {
-      const dif = meta - d.goles_totales;
+      const dif = meta - d[config.total];
       if (dif <= 0) {
         niveladosCount++;
       } else {
@@ -168,17 +182,17 @@
       : 100;
 
     const recomendados = [...regulares]
-      .filter(d => d.goles_totales < meta)
-      .sort((a, b) => a.goles_totales - b.goles_totales)
+      .filter(d => d[config.total] < meta)
+      .sort((a, b) => a[config.total] - b[config.total])
       .slice(0, 3);
 
-    const ventajaEstrella = estrella ? (estrella.goles_totales - meta) : 0;
+    const ventajaEstrella = estrella ? (estrella[config.total] - meta) : 0;
 
     return {
       estrella,
       regulares,
       meta,
-      totalGolesEquipo,
+      totalEquipo,
       totalFaltan,
       niveladosCount,
       porcentajeNivelacion,
@@ -231,11 +245,12 @@
       gRosterError = 'No se pudieron actualizar las cartas; se muestran los datos guardados.';
     }
 
+    const config = configEstadistica();
     const {
       estrella,
       regulares,
       meta,
-      totalGolesEquipo,
+      totalEquipo,
       totalFaltan,
       niveladosCount,
       porcentajeNivelacion,
@@ -251,11 +266,11 @@
     }
 
     if (gFiltro === 'estrella') {
-      listaMostrar = listaMostrar.filter(d => d.id === gState.estrella_id);
+      listaMostrar = listaMostrar.filter(d => d.id === gState[config.estrella]);
     } else if (gFiltro === 'pendientes') {
-      listaMostrar = listaMostrar.filter(d => d.id !== gState.estrella_id && d.goles_totales < meta);
+      listaMostrar = listaMostrar.filter(d => d.id !== gState[config.estrella] && d[config.total] < meta);
     } else if (gFiltro === 'nivelados') {
-      listaMostrar = listaMostrar.filter(d => d.id !== gState.estrella_id && d.goles_totales === meta);
+      listaMostrar = listaMostrar.filter(d => d.id !== gState[config.estrella] && d[config.total] === meta);
     }
 
     // Si aún no tiene jugadores agregados
@@ -269,19 +284,18 @@
         <div class="gol-header-banner">
           <div class="gol-header-titles">
             <h1>
-              🎯 CONTROL DE GOLEADORES <span class="badge-pill">Temporada eFootball</span>
+              ${config.icono} CONTROL DE ${config.mayuscula.toUpperCase()} <span class="badge-pill">${gState.temporada || 'Temporada Actual'}</span>
             </h1>
             <p>
-              Elige tus cartas exactas de tu plantilla, equilibra los goles de tus delanteros regulares para que todos empaten, 
-              y corona a tu <b>Goleador Estrella</b> en la cima del goleo.
+              Controla las ${config.plural} de cada carta de tu plantilla, equilibra las estadísticas y elige a tu ${gModoEstadistica === 'asistencias' ? 'Asistente' : 'Goleador'} Estrella.
             </p>
           </div>
           <div class="gol-actions-bar">
             <button class="btn-gol-primary" onclick="window.abrirModalAgregarJugador()" title="Seleccionar una carta de tu plantilla para añadirla">
               + Agregar Delantero (Elegir Carta)
             </button>
-            <button class="btn-gol-sec" onclick="window.abrirModalAjustarBase()" title="Cargar o modificar los goles iniciales de cada uno">
-              ⚡ Ajustar Goles Actuales
+            <button class="btn-gol-sec" onclick="window.abrirModalAjustarBase()" title="Cargar o modificar goles y asistencias iniciales">
+              ⚡ Ajustar Estadísticas
             </button>
             <button class="btn-gol-sec" onclick="window.abrirModalRegistrarPartido()" title="Anotar goles de un partido recién jugado">
               📋 Registrar Partido
@@ -292,6 +306,13 @@
             <button class="btn-gol-sec" onclick="window.abrirModalConfigMeta()" title="Modificar modo o meta de nivelación">
               ⚙️ Meta
             </button>
+            <button class="btn-gol-sec btn-gol-reset" onclick="window.reiniciarTemporada()" title="Archiva las estadísticas actuales y comienza una temporada nueva" ${tieneJugadores ? '' : 'disabled'}>
+              🔄 Reiniciar temporada
+            </button>
+          </div>
+          <div class="gol-mode-switch" role="group" aria-label="Tipo de estadística">
+            <button class="gol-pill-btn ${gModoEstadistica === 'goles' ? 'activo' : ''}" onclick="window.cambiarModoEstadistica('goles')" aria-pressed="${gModoEstadistica === 'goles'}">⚽ Goleadores</button>
+            <button class="gol-pill-btn ${gModoEstadistica === 'asistencias' ? 'activo' : ''}" onclick="window.cambiarModoEstadistica('asistencias')" aria-pressed="${gModoEstadistica === 'asistencias'}">🎯 Asistencias</button>
           </div>
         </div>
 
@@ -321,7 +342,7 @@
             <!-- Tarjeta Goleador Estrella -->
             <div class="gol-dash-card card-estrella">
               <div class="dash-card-header">
-                <span class="dash-card-tag">👑 Goleador Estrella de Temporada</span>
+                <span class="dash-card-tag">👑 ${gModoEstadistica === 'asistencias' ? 'Asistente' : 'Goleador'} Estrella de Temporada</span>
                 <button class="btn-icon-subtle" onclick="window.abrirModalSeleccionarEstrella()" title="Cambiar goleador estrella">
                   🔄 Cambiar
                 </button>
@@ -335,11 +356,11 @@
                   <div class="estrella-info">
                     <h2>${obtenerCartaActual(estrella).nombre || estrella.nombre}</h2>
                     <div class="estrella-sub">
-                      ${obtenerCartaActual(estrella).posicion || 'DC'} &bull; OVR ${obtenerCartaActual(estrella).overall || obtenerCartaActual(estrella).ovr || '—'} &bull; Base: ${estrella.goles_base} | Nuevos: +${estrella.goles_nuevos}
+                      ${obtenerCartaActual(estrella).posicion || 'DC'} &bull; OVR ${obtenerCartaActual(estrella).overall || obtenerCartaActual(estrella).ovr || '—'} &bull; Base: ${estrella[config.base]} | Nuevos: +${estrella[config.nuevos]}
                     </div>
                     <div class="estrella-tally">
-                      <span class="estrella-goles-big" id="tally-estrella">${estrella.goles_totales}</span>
-                      <span style="font-size:0.9rem;font-weight:700;color:var(--oro);text-transform:uppercase;">Goles</span>
+                      <span class="estrella-goles-big" id="tally-estrella">${estrella[config.total]}</span>
+                      <span style="font-size:0.9rem;font-weight:700;color:var(--oro);text-transform:uppercase;">${config.plural}</span>
                       ${ventajaEstrella > 0 ? `
                         <span class="estrella-ventaja">+${ventajaEstrella} sobre el grupo</span>
                       ` : `
@@ -358,29 +379,29 @@
               <div class="dash-card-header">
                 <span class="dash-card-tag" style="color:#10b981;">⚖️ Nivelación del Grupo (${regulares.length} Delanteros)</span>
                 <span style="font-size:0.75rem;color:var(--apagado);">
-                  Meta: <b style="color:#fff">${meta} goles</b> (${gState.meta_modo === 'max' ? 'Auto-Mayor' : 'Fija'})
+                  Meta: <b style="color:#fff">${meta} ${config.plural}</b> (${gState[config.metaModo] === 'max' ? 'Auto-Mayor' : 'Fija'})
                 </span>
               </div>
               
               <div class="balance-stats-row">
                 <div class="balance-item">
-                  <span class="balance-label">Goles Totales Equipo</span>
-                  <span class="balance-val highlight">${totalGolesEquipo}</span>
+                  <span class="balance-label">${config.mayuscula} Totales del Equipo</span>
+                  <span class="balance-val highlight">${totalEquipo}</span>
                 </div>
                 <div class="balance-item">
-                  <span class="balance-label">Delanteros al Día</span>
+                  <span class="balance-label">Jugadores al Día</span>
                   <span class="balance-val">${niveladosCount} / ${regulares.length}</span>
                 </div>
                 <div class="balance-item">
                   <span class="balance-label">Faltan para Nivelar</span>
                   <span class="balance-val" style="color:${totalFaltan === 0 ? '#10b981' : '#f0b429'}">
-                    ${totalFaltan === 0 ? '¡100% Empatados!' : `${totalFaltan} goles`}
+                    ${totalFaltan === 0 ? '¡100% Nivelados!' : `${totalFaltan} ${config.plural}`}
                   </span>
                 </div>
               </div>
 
               <!-- Barra de Nivelación -->
-              <div class="barra-balance-wrap" title="${porcentajeNivelacion}% de delanteros con la misma cantidad de goles">
+              <div class="barra-balance-wrap" title="${porcentajeNivelacion}% de jugadores nivelados en ${config.plural}">
                 <div class="barra-balance-fill" style="width: ${porcentajeNivelacion}%"></div>
               </div>
 
@@ -389,11 +410,11 @@
                 <span style="font-size:1.1rem">💡</span>
                 <div>
                   ${recomendados.length > 0 ? `
-                    <b>Alineación sugerida para hoy:</b> Pon a jugar a 
-                    ${recomendados.map(r => `<strong>${r.nombre.split(' ')[0]}</strong> (faltan ${meta - r.goles_totales})`).join(', ')} 
-                    para emparejar la línea.
+                    <b>Jugadores recomendados:</b> Prioriza a
+                    ${recomendados.map(r => `<strong>${r.nombre.split(' ')[0]}</strong> (faltan ${meta - r[config.total]})`).join(', ')}
+                    para nivelar ${config.plural}.
                   ` : `
-                    <b style="color:#10b981;">¡Todos tus delanteros regulares están perfectamente empatados en ${meta} goles!</b>
+                    <b style="color:#10b981;">¡Todos tus jugadores regulares están nivelados en ${meta} ${config.plural}!</b>
                   `}
                 </div>
               </div>
@@ -407,10 +428,10 @@
                 Todos (${gState.delanteros.length})
               </button>
               <button class="gol-pill-btn ${gFiltro === 'pendientes' ? 'activo' : ''}" onclick="window.cambiarFiltroGoles('pendientes')">
-                ⏳ Faltan Goles (${regulares.filter(d => d.goles_totales < meta).length})
+                ⏳ Pendientes (${regulares.filter(d => d[config.total] < meta).length})
               </button>
               <button class="gol-pill-btn ${gFiltro === 'nivelados' ? 'activo' : ''}" onclick="window.cambiarFiltroGoles('nivelados')">
-                ✅ Nivelados (${regulares.filter(d => d.goles_totales === meta).length})
+                ✅ Nivelados (${regulares.filter(d => d[config.total] === meta).length})
               </button>
               <button class="gol-pill-btn ${gFiltro === 'estrella' ? 'activo' : ''}" onclick="window.cambiarFiltroGoles('estrella')">
                 👑 Estrella
@@ -442,16 +463,17 @@
 
   // ── Render de Tarjeta Individual con Carta eFootball Auténtica ─────────────
   function renderCardDelantero(d, meta) {
+    const config = configEstadistica();
     const carta = obtenerCartaActual(d);
-    const esEstrella = d.id === gState.estrella_id;
-    const dif = meta - d.goles_totales;
+    const esEstrella = d.id === gState[config.estrella];
+    const dif = meta - d[config.total];
 
     let pillClass = 'pendiente';
-    let pillText = `⏳ Faltan ${dif} goles`;
+    let pillText = `⏳ Faltan ${dif} ${config.plural}`;
 
     if (esEstrella) {
       pillClass = 'estrella';
-      pillText = '👑 Goleador Estrella';
+      pillText = `👑 ${gModoEstadistica === 'asistencias' ? 'Asistente' : 'Goleador'} Estrella`;
     } else if (dif === 0) {
       pillClass = 'nivelado';
       pillText = '✅ Nivelado';
@@ -460,7 +482,7 @@
       pillText = `⚠️ Adelantado (+${Math.abs(dif)})`;
     }
 
-    const porcentaje = meta > 0 ? Math.min(100, Math.round((d.goles_totales / meta) * 100)) : 100;
+    const porcentaje = meta > 0 ? Math.min(100, Math.round((d[config.total] / meta) * 100)) : 100;
 
     return `
       <div class="gol-player-card ${esEstrella ? 'es-estrella' : ''}" id="card-delantero-${d.id}">
@@ -489,13 +511,13 @@
             <!-- Gran Contador de Goles -->
             <div class="gol-counter-row">
               <div class="gol-total-display">
-                <span class="gol-total-num" id="gol-num-${d.id}">${d.goles_totales}</span>
-                <span class="gol-total-lbl">Goles Totales</span>
+                <span class="gol-total-num" id="gol-num-${d.id}">${d[config.total]}</span>
+                <span class="gol-total-lbl">${config.mayuscula} Totales</span>
               </div>
               <div class="gol-breakdown-details">
-                <span>Base inicial: <b>${d.goles_base}</b></span>
-                <span class="nuevos">Nuevos sumados: <b>+${d.goles_nuevos}</b></span>
-                <span class="gol-asistencias-total">🎯 Asistencias: <b>${d.asistencias_totales}</b> <small>(${d.asistencias_base} base + ${d.asistencias_nuevas} nuevas)</small></span>
+                <span>Base inicial: <b>${d[config.base]}</b></span>
+                <span class="nuevos">Nuevos sumados: <b>+${d[config.nuevos]}</b></span>
+                <span>${gModoEstadistica === 'goles' ? '🎯 Asistencias' : '⚽ Goles'}: <b>${gModoEstadistica === 'goles' ? d.asistencias_totales : d.goles_totales}</b></span>
               </div>
             </div>
 
@@ -503,7 +525,7 @@
             ${!esEstrella ? `
               <div class="gol-player-progress-wrap">
                 <div class="gol-player-progress-info">
-                  <span>Hacia la meta (${meta} goles)</span>
+                  <span>Hacia la meta (${meta} ${config.plural})</span>
                   <span><b>${porcentaje}%</b></span>
                 </div>
                 <div class="gol-player-progress-bar">
@@ -513,8 +535,8 @@
             ` : `
               <div class="gol-player-progress-wrap">
                 <div class="gol-player-progress-info">
-                  <span style="color:var(--oro)">⭐ Líder de goleo de temporada</span>
-                  <span style="color:var(--oro)"><b>Pichichi</b></span>
+                  <span style="color:var(--oro)">⭐ Líder de ${config.plural} de temporada</span>
+                  <span style="color:var(--oro)"><b>Estrella</b></span>
                 </div>
                 <div class="gol-player-progress-bar">
                   <div class="gol-player-progress-fill" style="width:100%;background:linear-gradient(90deg, var(--oro), #ffd700)"></div>
@@ -522,28 +544,18 @@
               </div>
             `}
 
-            <!-- Botonera de Goles -->
+            <!-- Acciones de la estadística seleccionada -->
             <div class="gol-buttons-grid">
-              <button class="btn-sumar-1" onclick="window.sumarGol('${d.id}', 1)" title="Sumar 1 gol">
-                ⚽ +1 Gol
-              </button>
-              <button class="btn-quick-add" onclick="window.sumarGol('${d.id}', 2)" title="Sumar 2 goles (Doblete)">
-                +2
-              </button>
-              <button class="btn-quick-add" onclick="window.sumarGol('${d.id}', 3)" title="Sumar 3 goles (Hat-Trick)">
-                🎩 +3
-              </button>
-              <button class="btn-quick-sub" onclick="window.restarGol('${d.id}', 1)" title="Deshacer 1 gol">
-                ↩ -1
-              </button>
-            </div>
-            <div class="gol-assists-actions">
-              <span>Asistencias</span>
-              <div class="gol-assists-buttons">
-                <button class="btn-assist-add" onclick="window.sumarAsistencia('${d.id}', 1)" title="Sumar 1 asistencia">🎯 +1</button>
+              ${gModoEstadistica === 'asistencias' ? `
+                <button class="btn-assist-add" onclick="window.sumarAsistencia('${d.id}', 1)" title="Sumar 1 asistencia">🎯 +1 Asistencia</button>
                 <button class="btn-assist-quick" onclick="window.sumarAsistencia('${d.id}', 2)" title="Sumar 2 asistencias">+2</button>
                 <button class="btn-quick-sub" onclick="window.restarAsistencia('${d.id}', 1)" title="Deshacer 1 asistencia">↩ -1</button>
-              </div>
+              ` : `
+                <button class="btn-sumar-1" onclick="window.sumarGol('${d.id}', 1)" title="Sumar 1 gol">⚽ +1 Gol</button>
+                <button class="btn-quick-add" onclick="window.sumarGol('${d.id}', 2)" title="Sumar 2 goles (Doblete)">+2</button>
+                <button class="btn-quick-add" onclick="window.sumarGol('${d.id}', 3)" title="Sumar 3 goles (Hat-Trick)">🎩 +3</button>
+                <button class="btn-quick-sub" onclick="window.restarGol('${d.id}', 1)" title="Deshacer 1 gol">↩ -1</button>
+              `}
             </div>
 
             <!-- Footer de la tarjeta con opciones -->
@@ -579,8 +591,6 @@
       cantidad: cantidad
     });
     if (gState.historial_partidos.length > 50) gState.historial_partidos.pop();
-
-    playGoalSound();
 
     const numEl = document.getElementById(`gol-num-${id}`);
     if (numEl) {
@@ -655,11 +665,52 @@
     window.renderGoleadores();
   };
 
-  window.hacerEstrella = async function (id) {
-    gState.estrella_id = id;
-    gState.delanteros.forEach(d => {
-      d.es_estrella = (d.id === id);
+  window.reiniciarTemporada = async function () {
+    if (!gState.delanteros.length) return;
+    if (!window.confirm('Se guardarán las estadísticas completas de esta temporada en el historial y los contadores actuales empezarán en cero. ¿Deseas continuar?')) return;
+
+    const delanterosArchivados = JSON.parse(JSON.stringify(gState.delanteros));
+    const temporadasArchivadas = Array.isArray(gState.temporadas_archivadas)
+      ? gState.temporadas_archivadas
+      : [];
+    temporadasArchivadas.unshift({
+      id: Date.now().toString(),
+      temporada: gState.temporada || 'Temporada Actual',
+      fecha: new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }),
+      total_goles: delanterosArchivados.reduce((total, jugador) => total + jugador.goles_totales, 0),
+      total_asistencias: delanterosArchivados.reduce((total, jugador) => total + jugador.asistencias_totales, 0),
+      delanteros: delanterosArchivados,
+      historial_partidos: JSON.parse(JSON.stringify(gState.historial_partidos || [])),
+      meta_modo: gState.meta_modo,
+      meta_fija: gState.meta_fija,
+      asistencias_meta_modo: gState.asistencias_meta_modo,
+      asistencias_meta_fija: gState.asistencias_meta_fija,
+      estrella_id: gState.estrella_id,
+      asistente_estrella_id: gState.asistente_estrella_id
     });
+
+    gState.temporadas_archivadas = temporadasArchivadas;
+    gState.temporada = `Temporada ${temporadasArchivadas.length + 1}`;
+    gState.historial_partidos = [];
+    gState.delanteros.forEach(jugador => {
+      jugador.goles_base = 0;
+      jugador.goles_nuevos = 0;
+      jugador.goles_totales = 0;
+      jugador.asistencias_base = 0;
+      jugador.asistencias_nuevas = 0;
+      jugador.asistencias_totales = 0;
+    });
+
+    await guardarGoleadores();
+    window.renderGoleadores();
+  };
+
+  window.hacerEstrella = async function (id) {
+    const config = configEstadistica();
+    gState[config.estrella] = id;
+    if (gModoEstadistica === 'goles') {
+      gState.delanteros.forEach(d => d.es_estrella = (d.id === id));
+    }
     await guardarGoleadores();
     window.renderGoleadores();
   };
@@ -672,6 +723,9 @@
     gState.delanteros = gState.delanteros.filter(d => d.id !== id);
     if (gState.estrella_id === id && gState.delanteros.length > 0) {
       gState.estrella_id = gState.delanteros[0].id;
+    }
+    if (gState.asistente_estrella_id === id) {
+      gState.asistente_estrella_id = gState.delanteros.length ? gState.delanteros[0].id : null;
     }
     await guardarGoleadores();
     window.renderGoleadores();
@@ -1181,7 +1235,6 @@
     const rival = (document.getElementById('partido-rival').value || '').trim() || 'Partido';
     let detalle = [];
     let algunaEstadistica = false;
-    let algunGol = false;
 
     gState.delanteros.forEach(d => {
       const golesEl = document.getElementById(`match-gol-val-${d.id}`);
@@ -1195,7 +1248,6 @@
         d.asistencias_totales = d.asistencias_base + d.asistencias_nuevas;
         detalle.push({ nombre: d.nombre, goles, asistencias });
         algunaEstadistica = true;
-        if (goles > 0) algunGol = true;
       }
     });
 
@@ -1208,7 +1260,6 @@
         rival: rival,
         detalle: detalle
       });
-      if (algunGol) playGoalSound();
       await guardarGoleadores();
     }
 
@@ -1220,6 +1271,8 @@
   window.abrirModalEditarJugador = function (id) {
     const d = gState.delanteros.find(x => x.id === id);
     if (!d) return;
+    const config = configEstadistica();
+    const esEstrellaActiva = d.id === gState[config.estrella];
 
     const overlay = document.createElement('div');
     overlay.className = 'gol-modal-backdrop';
@@ -1265,8 +1318,8 @@
           <div style="margin-top:6px;">
             <label style="font-size:0.72rem;color:var(--apagado);text-transform:uppercase;font-weight:700">Rol en la Temporada</label>
             <select id="edit-estrella" class="gol-search-input" style="width:100%;margin-top:4px;">
-              <option value="0" ${!d.es_estrella ? 'selected' : ''}>Regular (Debe empatar con el grupo)</option>
-              <option value="1" ${d.es_estrella ? 'selected' : ''}>👑 Goleador Estrella (Pichichi solitario)</option>
+              <option value="0" ${!esEstrellaActiva ? 'selected' : ''}>Regular (Debe empatar con el grupo)</option>
+              <option value="1" ${esEstrellaActiva ? 'selected' : ''}>👑 ${gModoEstadistica === 'asistencias' ? 'Asistente' : 'Goleador'} Estrella</option>
             </select>
           </div>
         </div>
@@ -1291,16 +1344,18 @@
     d.asistencias_nuevas = Math.max(0, parseInt(document.getElementById('edit-asist-nuevas').value, 10) || 0);
     d.asistencias_totales = d.asistencias_base + d.asistencias_nuevas;
 
+    const config = configEstadistica();
     const esEst = document.getElementById('edit-estrella').value === '1';
     if (esEst) {
-      gState.estrella_id = d.id;
-      gState.delanteros.forEach(x => x.es_estrella = (x.id === d.id));
-    } else if (d.id === gState.estrella_id) {
-      d.es_estrella = false;
+      gState[config.estrella] = d.id;
+      if (gModoEstadistica === 'goles') gState.delanteros.forEach(x => x.es_estrella = (x.id === d.id));
+    } else if (d.id === gState[config.estrella]) {
       const otro = gState.delanteros.find(x => x.id !== d.id);
       if (otro) {
-        gState.estrella_id = otro.id;
-        otro.es_estrella = true;
+        gState[config.estrella] = otro.id;
+        if (gModoEstadistica === 'goles') {
+          gState.delanteros.forEach(x => x.es_estrella = (x.id === otro.id));
+        }
       }
     }
 
@@ -1311,6 +1366,8 @@
 
   // ── MODAL 4: Configurar Meta ───────────────────────────────────────────────
   window.abrirModalConfigMeta = function () {
+    const config = configEstadistica();
+    const tipo = config.plural;
     const overlay = document.createElement('div');
     overlay.className = 'gol-modal-backdrop';
     overlay.id = 'ov-config-meta';
@@ -1318,31 +1375,31 @@
     overlay.innerHTML = `
       <div class="gol-modal-card" style="max-width: 460px;">
         <div class="gol-modal-header">
-          <h3>⚙️ Meta de Nivelación de Grupo</h3>
+          <h3>⚙️ Meta de Nivelación de ${tipo}</h3>
           <button class="gol-modal-close" onclick="window.cerrarModalGol('ov-config-meta')">✕</button>
         </div>
         <div class="gol-modal-body">
           <p style="font-size:0.82rem;color:var(--apagado);margin:0">
-            ¿Cómo deseas calcular la meta a la que deben llegar tus delanteros regulares?
+            ¿Cómo deseas calcular la meta a la que deben llegar los jugadores regulares?
           </p>
           <div style="display:flex;flex-direction:column;gap:12px;margin-top:6px;">
             <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
-              <input type="radio" name="meta-modo" value="max" ${gState.meta_modo === 'max' ? 'checked' : ''} style="margin-top:3px;">
+              <input type="radio" name="meta-modo" value="max" ${gState[config.metaModo] === 'max' ? 'checked' : ''} style="margin-top:3px;">
               <div>
-                <b style="color:#fff">Automático: Emparejar al más goleador</b>
-                <div style="font-size:0.75rem;color:var(--apagado)">La meta será la cifra máxima de goles que tenga cualquier delantero regular.</div>
+                <b style="color:#fff">Automático: Emparejar la cifra más alta</b>
+                <div style="font-size:0.75rem;color:var(--apagado)">La meta será el valor más alto entre los jugadores regulares.</div>
               </div>
             </label>
             <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
-              <input type="radio" name="meta-modo" value="fija" ${gState.meta_modo === 'fija' ? 'checked' : ''} style="margin-top:3px;">
+              <input type="radio" name="meta-modo" value="fija" ${gState[config.metaModo] === 'fija' ? 'checked' : ''} style="margin-top:3px;">
               <div>
                 <b style="color:#fff">Meta fija personalizada</b>
-                <div style="font-size:0.75rem;color:var(--apagado)">Fija un número exacto de goles por temporada (ej. 25 goles c/u).</div>
+                <div style="font-size:0.75rem;color:var(--apagado)">Fija una cantidad objetivo por temporada.</div>
               </div>
             </label>
             <div id="wrap-meta-fija" style="margin-left:26px;">
-              <label style="font-size:0.72rem;color:var(--apagado);font-weight:700">Cantidad de goles objetivo:</label>
-              <input type="number" id="input-meta-fija-val" class="gol-search-input" value="${gState.meta_fija || 20}" min="1" style="width:100px;margin-top:4px;">
+              <label style="font-size:0.72rem;color:var(--apagado);font-weight:700">Cantidad objetivo:</label>
+              <input type="number" id="input-meta-fija-val" class="gol-search-input" value="${gState[config.metaFija] || 20}" min="1" style="width:100px;margin-top:4px;">
             </div>
           </div>
         </div>
@@ -1357,10 +1414,11 @@
   };
 
   window.guardarConfigMeta = async function () {
+    const config = configEstadistica();
     const modoRadio = document.querySelector('input[name="meta-modo"]:checked');
-    if (modoRadio) gState.meta_modo = modoRadio.value;
+    if (modoRadio) gState[config.metaModo] = modoRadio.value;
     const valInput = document.getElementById('input-meta-fija-val');
-    if (valInput) gState.meta_fija = parseInt(valInput.value, 10) || 20;
+    if (valInput) gState[config.metaFija] = Math.max(1, parseInt(valInput.value, 10) || 20);
 
     await guardarGoleadores();
     window.cerrarModalGol('ov-config-meta');
@@ -1369,6 +1427,8 @@
 
   // ── MODAL 5: Seleccionar Estrella ──────────────────────────────────────────
   window.abrirModalSeleccionarEstrella = function () {
+    const config = configEstadistica();
+    const starId = gState[config.estrella];
     const overlay = document.createElement('div');
     overlay.className = 'gol-modal-backdrop';
     overlay.id = 'ov-sel-estrella';
@@ -1376,27 +1436,27 @@
     overlay.innerHTML = `
       <div class="gol-modal-card" style="max-width: 480px;">
         <div class="gol-modal-header">
-          <h3>👑 Elegir Goleador Estrella</h3>
+          <h3>👑 Elegir ${gModoEstadistica === 'asistencias' ? 'Asistente' : 'Goleador'} Estrella</h3>
           <button class="gol-modal-close" onclick="window.cerrarModalGol('ov-sel-estrella')">✕</button>
         </div>
         <div class="gol-modal-body">
           <p style="font-size:0.82rem;color:var(--apagado);margin:0">
-            Elige al jugador que será el goleador solitario con más goles que todos los demás:
+            Elige al jugador que será la estrella de ${config.plural}:
           </p>
           <div style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;">
             ${gState.delanteros.map(d => `
               <div 
-                style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;cursor:pointer;background:${d.id === gState.estrella_id ? 'rgba(240,180,41,0.15)' : 'rgba(255,255,255,0.03)'};border:1px solid ${d.id === gState.estrella_id ? 'var(--oro)' : 'var(--borde)'}"
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;cursor:pointer;background:${d.id === starId ? 'rgba(240,180,41,0.15)' : 'rgba(255,255,255,0.03)'};border:1px solid ${d.id === starId ? 'var(--oro)' : 'var(--borde)'}"
                 onclick="window.seleccionarEstrellaDirecta('${d.id}')"
               >
                 <div class="gol-mini-player">
                   <img src="${d.imagen || '/imagenes/default_player.png'}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'36\\' height=\\'36\\' fill=\\'%23666\\' viewBox=\\'0 0 24 24\\'><circle cx=\\'12\\' cy=\\'8\\' r=\\'5\\'/><path d=\\'M3 21v-2a7 7 0 0 1 14 0v2\\'/></svg>'">
                   <div>
                     <b style="color:#fff">${d.nombre}</b>
-                    <div style="font-size:0.75rem;color:var(--apagado)">${d.goles_totales} goles actuales · OVR ${d.overall || '—'}</div>
+                    <div style="font-size:0.75rem;color:var(--apagado)">${d[config.total]} ${config.plural} actuales · OVR ${d.overall || '—'}</div>
                   </div>
                 </div>
-                ${d.id === gState.estrella_id ? '<span style="color:var(--oro);font-weight:700">👑 Actual</span>' : '<button class="btn-gol-sec" style="padding:4px 10px;font-size:0.72rem">Elegir</button>'}
+                ${d.id === starId ? '<span style="color:var(--oro);font-weight:700">👑 Actual</span>' : '<button class="btn-gol-sec" style="padding:4px 10px;font-size:0.72rem">Elegir</button>'}
               </div>
             `).join('')}
           </div>
@@ -1408,8 +1468,11 @@
   };
 
   window.seleccionarEstrellaDirecta = async function (id) {
-    gState.estrella_id = id;
-    gState.delanteros.forEach(d => d.es_estrella = (d.id === id));
+    const config = configEstadistica();
+    gState[config.estrella] = id;
+    if (gModoEstadistica === 'goles') {
+      gState.delanteros.forEach(d => d.es_estrella = (d.id === id));
+    }
     await guardarGoleadores();
     window.cerrarModalGol('ov-sel-estrella');
     window.renderGoleadores();
@@ -1422,20 +1485,42 @@
     overlay.id = 'ov-historial';
 
     const logs = Array.isArray(gState.historial_partidos) ? gState.historial_partidos : [];
+    const temporadas = Array.isArray(gState.temporadas_archivadas) ? gState.temporadas_archivadas : [];
 
     overlay.innerHTML = `
       <div class="gol-modal-card" style="max-width: 600px;">
         <div class="gol-modal-header">
-          <h3>📜 Historial de Goles, Asistencias y Partidos</h3>
+          <h3>📜 Historial de Temporadas, Goles y Partidos</h3>
           <button class="gol-modal-close" onclick="window.cerrarModalGol('ov-historial')">✕</button>
         </div>
         <div class="gol-modal-body" style="max-height:450px;">
-          ${logs.length === 0 ? `
+          ${temporadas.length ? `
+            <h4 style="margin:0 0 10px;color:var(--oro)">Temporadas archivadas</h4>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+              ${temporadas.map(temporada => `
+                <details style="background:rgba(255,255,255,0.03);border:1px solid var(--borde);border-radius:10px;padding:12px 14px">
+                  <summary style="cursor:pointer;color:var(--oro);font-weight:700">
+                    ${temporada.temporada} · ${temporada.total_goles || 0} goles · ${temporada.total_asistencias || 0} asistencias
+                    <span style="float:right;font-size:0.72rem;color:var(--apagado)">${temporada.fecha || ''}</span>
+                  </summary>
+                  <div style="font-size:0.8rem;color:#e5e7eb;margin-top:10px">
+                    ${(temporada.delanteros || []).map(jugador => `
+                      <div style="padding:5px 0;border-top:1px solid var(--borde)">
+                        <b>${jugador.nombre}</b> · ⚽ ${jugador.goles_totales || 0} goles · 🎯 ${jugador.asistencias_totales || 0} asistencias
+                      </div>
+                    `).join('')}
+                  </div>
+                </details>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${logs.length === 0 && temporadas.length === 0 ? `
             <div style="text-align:center;padding:30px;color:var(--apagado)">
               Aún no hay registros de goles o partidos guardados.
             </div>
-          ` : `
+          ` : logs.length ? `
             <div style="display:flex;flex-direction:column;gap:10px;">
+              ${temporadas.length ? '<h4 style="margin:0;color:var(--oro)">Temporada actual</h4>' : ''}
               ${logs.map(item => `
                 <div style="background:rgba(255,255,255,0.03);border:1px solid var(--borde);border-radius:10px;padding:12px 14px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -1454,7 +1539,7 @@
                 </div>
               `).join('')}
             </div>
-          `}
+          ` : ''}
         </div>
         <div class="gol-modal-footer">
           <button class="btn-gol-sec" onclick="window.cerrarModalGol('ov-historial')">Cerrar</button>

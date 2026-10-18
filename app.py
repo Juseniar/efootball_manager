@@ -1,26 +1,38 @@
-"""eFootball Manager v3 — Multi-usuario (SQLite)"""
-import json, uuid, hashlib, secrets
+"""eFootball Manager v3 — Multi-usuario."""
+import hashlib
+import hmac
+import json
+import os
+import secrets
+import uuid
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, send_file, session, redirect
+from sqlalchemy import text
 from models import db, User, Player, Coach, Folder, History, ProgHistory, Lineup, GoalTracker
+from storage import upload_public_image
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__, static_folder="static")
-app.secret_key = "efootball-manager-v3-stable-secret-key"
+app.secret_key = os.environ.get("SECRET_KEY", "local-development-only-change-me")
 
-import pymysql
-
-try:
-    connection = pymysql.connect(host='localhost', user='root', password='')
-    with connection.cursor() as cursor:
-        cursor.execute('CREATE DATABASE IF NOT EXISTS efootball_manager')
-    connection.commit()
-    connection.close()
-except Exception as e:
-    print("Nota: No se pudo verificar la base de datos MySQL (quizá XAMPP esté apagado). Error:", e)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/efootball_manager'
+LOCAL_DATABASE_PATH = Path(__file__).resolve().parent / "instance" / "database.db"
+LOCAL_DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{LOCAL_DATABASE_PATH.as_posix()}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://", "postgresql+psycopg://", 1
+        )
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 db.init_app(app)
 
 with app.app_context():
@@ -34,11 +46,17 @@ def no_cache(response):
         response.headers['Expires'] = '0'
     return response
 
-BASE_DIR   = Path("efootball_data")
+BASE_DIR = Path(os.environ.get("DATA_DIR", "efootball_data"))
 BASE_DIR.mkdir(exist_ok=True)
 
 def hash_pwd(pwd):
-    return hashlib.sha256(pwd.encode()).hexdigest()
+    return generate_password_hash(pwd, method="pbkdf2:sha256", salt_length=8)
+
+def verificar_password(stored, supplied):
+    if stored.startswith("pbkdf2:"):
+        return check_password_hash(stored, supplied)
+    legacy_hash = hashlib.sha256(supplied.encode()).hexdigest()
+    return hmac.compare_digest(stored, legacy_hash)
 
 def user_dir(username):
     d = BASE_DIR / "usuarios" / username
@@ -58,6 +76,12 @@ def save_img(f, prefix, id_, username):
     if f and f.filename:
         ext = Path(f.filename).suffix or ".png"
         name = f"{prefix}_{id_}{ext}"
+        if os.environ.get("SUPABASE_URL") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY"):
+            return upload_public_image(
+                f"{username}/{name}",
+                f.read(),
+                f.mimetype or "application/octet-stream",
+            )
         img_dir = user_dir(username) / "imagenes"
         img_dir.mkdir(exist_ok=True)
         f.save(img_dir / name)
@@ -99,6 +123,19 @@ def get_escudos():
     return jsonify([{"nombre": f.stem, "url": f"/imagenes/escudos/{f.name}"}
         for f in sorted(d.iterdir()) if f.suffix.lower() in ext])
 
+@app.route("/api/login-cards")
+def get_login_cards():
+    d = Path(__file__).resolve().parent / "imagenes" / "jugadores"
+    if not d.exists(): return jsonify([])
+    ext = {".png", ".jpg", ".jpeg", ".webp"}
+    return jsonify([{"url": f"/imagenes/jugadores/{f.name}"}
+        for f in sorted(d.iterdir()) if f.is_file() and f.suffix.lower() in ext])
+
+@app.route("/api/health")
+def health():
+    db.session.execute(text("SELECT 1"))
+    return jsonify({"ok": True})
+
 # ── Auth routes ───────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
@@ -121,8 +158,12 @@ def api_login():
         return jsonify({"error": "Usuario y contraseña requeridos"}), 400
     
     u = db.session.get(User, username)
-    if not u or u.password != hash_pwd(password):
+    if not u or not verificar_password(u.password, password):
         return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+    if not u.password.startswith("pbkdf2:"):
+        u.password = hash_pwd(password)
+        db.session.commit()
         
     session["username"] = username
     session["nombre"] = u.nombre
@@ -262,15 +303,30 @@ def put_jug(jid):
     db.session.add(h)
     
     db.session.commit()
-    
-    # Trim to 30 records
-    all_h = History.query.filter_by(username=u, player_id=jid).order_by(History.id.desc()).all()
-    if len(all_h) > 30:
-        for extra in all_h[30:]:
-            db.session.delete(extra)
-        db.session.commit()
 
     return jsonify(d)
+
+@app.route("/api/jugadores/<jid>/imagen", methods=["PATCH"])
+def patch_jug_imagen(jid):
+    u, err, code = check_auth()
+    if err: return err, code
+    j = Player.query.filter_by(username=u, id=jid).first()
+    if not j:
+        return jsonify({"error": "no encontrado"}), 404
+
+    imagen = request.files.get("imagen")
+    if not imagen or not imagen.filename:
+        return jsonify({"error": "imagen requerida"}), 400
+
+    image_url = save_img(imagen, "j", jid, u)
+    if not image_url:
+        return jsonify({"error": "no se pudo guardar la imagen"}), 400
+
+    data = j.parsed_data
+    data["imagen"] = f"{image_url}?v={uuid.uuid4().hex}"
+    j.data = json.dumps(data, ensure_ascii=False)
+    db.session.commit()
+    return jsonify({"id": jid, "imagen": data["imagen"]})
 
 @app.route("/api/jugadores/<jid>", methods=["DELETE"])
 def del_jug(jid):
@@ -429,12 +485,6 @@ def post_prog_hist(jid):
     ph = ProgHistory(username=u, player_id=jid, snapshot=json.dumps(snap, ensure_ascii=False), created_at=snap["_ts"])
     db.session.add(ph)
     db.session.commit()
-    
-    all_ph = ProgHistory.query.filter_by(username=u, player_id=jid).order_by(ProgHistory.id.desc()).all()
-    if len(all_ph) > 30:
-        for extra in all_ph[30:]:
-            db.session.delete(extra)
-        db.session.commit()
         
     return jsonify(snap), 201
 
@@ -480,7 +530,8 @@ def get_goleadores():
         "meta_modo": "max",
         "meta_fija": 20,
         "temporada": "Temporada Actual",
-        "historial_partidos": []
+        "historial_partidos": [],
+        "temporadas_archivadas": []
     }
     
     gt = GoalTracker(username=u, data=json.dumps(default_data, ensure_ascii=False))
@@ -579,4 +630,8 @@ if __name__ == "__main__":
     print("\n[eFootball Manager v3] Multi-usuario (SQLite)")
     print("   http://localhost:5000\n")
     webbrowser.open("http://localhost:5000")
-    app.run(debug=False, port=5000)
+    app.run(
+        host="127.0.0.1",
+        debug=False,
+        port=int(os.environ.get("EFOOTBALL_PORT", "5000")),
+    )

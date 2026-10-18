@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+    [hidden] { display: none !important }
 
     :root {
       --oro: #f0b429;
@@ -57,19 +58,54 @@
         repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,.5) 60px, rgba(255,255,255,.5) 61px);
     }
 
-    /* Partículas decorativas */
-    .particle {
+    .login-card-wall {
       position: fixed;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: flotar linear infinite;
+      inset: 0;
       z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
-    @keyframes flotar {
-      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: .3; }
-      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    .login-player-card {
+      position: absolute;
+      width: clamp(48px, 5.4vw, 72px);
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      border: 1px solid rgba(240, 180, 41, .3);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(30, 43, 62, .92), rgba(9, 14, 22, .96));
+      box-shadow: 0 5px 18px rgba(0, 0, 0, .24);
+      opacity: .28;
+      transform: translate3d(var(--card-x), var(--card-y), 0) rotate(var(--card-rotation));
+      transition: opacity 1.2s ease;
+    }
+    .login-player-card.cambiando {
+      opacity: 0;
+    }
+    .login-player-card.preparando {
+      opacity: 0;
+      transition: none;
+    }
+    .login-player-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      filter: saturate(.72);
+    }
+    .login-player-card::after {
+      content: "";
+      position: absolute;
+      inset: 35% 0 0;
+      background: linear-gradient(transparent, rgba(5, 8, 13, .78));
+    }
+    @media (max-width: 760px) {
+      .login-player-card {
+        width: 18px;
+        opacity: .23;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .login-player-card { transition: none; }
     }
 
     /* Contenedor principal */
@@ -180,6 +216,43 @@
       box-shadow: 0 0 0 3px rgba(240,180,41,.12);
     }
     .form-input::placeholder { color: var(--apagado) }
+    .password-input-wrap {
+      position: relative;
+    }
+    .password-input-wrap .form-input {
+      padding-right: 48px;
+    }
+    .btn-toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--apagado);
+      cursor: pointer;
+    }
+    .btn-toggle-password:hover,
+    .btn-toggle-password:focus-visible {
+      color: var(--oro);
+      outline: 2px solid rgba(240,180,41,.45);
+      outline-offset: 1px;
+    }
+    .btn-toggle-password svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
     /* Botón submit */
     .btn-submit {
@@ -313,6 +386,7 @@
   </script>
   <div class="bg"></div>
   <div class="bg-field"></div>
+  <div class="login-card-wall" id="login-card-wall" aria-hidden="true"></div>
 
   <div class="container">
     <div class="logo-wrap">
@@ -337,8 +411,14 @@
         </div>
         <div class="form-group">
           <label class="form-label">Contraseña</label>
-          <input class="form-input" id="l-pass" type="password" placeholder="••••••••"
-            autocomplete="current-password">
+          <div class="password-input-wrap">
+            <input class="form-input" id="l-pass" type="password" placeholder="••••••••"
+              autocomplete="current-password">
+            <button class="btn-toggle-password" type="button" aria-label="Mostrar contraseña"
+              aria-pressed="false" onclick="togglePasswordVisibility('l-pass', this)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </div>
         <button class="btn-submit" id="l-btn" onclick="doLogin()">⚽ Entrar</button>
         <div class="msg" id="l-msg"></div>
@@ -358,8 +438,14 @@
         </div>
         <div class="form-group">
           <label class="form-label">Contraseña</label>
-          <input class="form-input" id="r-pass" type="password" placeholder="•••••••• (mín. 4 caracteres)"
-            autocomplete="new-password">
+          <div class="password-input-wrap">
+            <input class="form-input" id="r-pass" type="password" placeholder="•••••••• (mín. 4 caracteres)"
+              autocomplete="new-password">
+            <button class="btn-toggle-password" type="button" aria-label="Mostrar contraseña"
+              aria-pressed="false" onclick="togglePasswordVisibility('r-pass', this)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
         </div>
         <button class="btn-submit" id="r-btn" onclick="doRegistro()">🚀 Crear cuenta</button>
         <div class="msg" id="r-msg"></div>
@@ -387,7 +473,13 @@
           </div>
           <div class="form-group">
             <label class="form-label">Nueva contraseña</label>
-            <input class="form-input" id="rec-newpwd" type="password" placeholder="•••••••• (mín. 4 caracteres)">
+            <div class="password-input-wrap">
+              <input class="form-input" id="rec-newpwd" type="password" placeholder="•••••••• (mín. 4 caracteres)">
+              <button class="btn-toggle-password" type="button" aria-label="Mostrar contraseña"
+                aria-pressed="false" onclick="togglePasswordVisibility('rec-newpwd', this)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
           </div>
           <button class="btn-submit" onclick="doRecuperar()">✅ Cambiar contraseña</button>
           <div class="msg" id="rec-msg2"></div>
@@ -400,6 +492,18 @@
   </div>
 
   <script>
+    function togglePasswordVisibility(inputId, button) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const mostrar = input.type === 'password';
+      input.type = mostrar ? 'text' : 'password';
+      button.setAttribute('aria-pressed', String(mostrar));
+      button.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      button.innerHTML = mostrar
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-3.1 3.8"></path><path d="M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7a10 10 0 0 0 3-.5"></path></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    }
+
     function toggleModo() {
       const claro = document.body.classList.toggle('modo-claro');
       const btn = document.getElementById('modo-btn');
@@ -444,24 +548,182 @@
     logoEscudo.addEventListener('mouseenter', cambiarEscudo);
     cargarEscudos();
 
-    // Partículas decorativas
-    const emojis = ['⚽','🥅','🏆','⭐','🎯','👟'];
-    for (let i = 0; i < 12; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      const size = Math.random() * 20 + 14;
-      p.style.cssText = `
-        left: ${Math.random()*100}%;
-        width: ${size}px; height: ${size}px;
-        font-size: ${size * .85}px;
-        animation-duration: ${Math.random()*18+12}s;
-        animation-delay: ${Math.random()*12}s;
-        display:flex;align-items:center;justify-content:center;
-        background:transparent;
-      `;
-      p.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-      document.body.appendChild(p);
+    async function cargarCartasDecorativas() {
+      const contenedor = document.getElementById('login-card-wall');
+      if (!contenedor) return;
+      try {
+        const response = await fetch('/imagenes/jugadores/cards.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const listado = await response.json();
+        if (!Array.isArray(listado)) return;
+        const archivos = listado.filter(nombre =>
+          typeof nombre === 'string' && /^[\w.-]+\.(?:png|jpe?g|webp)$/i.test(nombre)
+        );
+        if (archivos.length === 0) return;
+
+        const reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const cartasValidas = archivos
+          .map(nombre => ({ nombre, orden: Math.random() }))
+          .sort((a, b) => a.orden - b.orden)
+          .map(item => item.nombre);
+
+        let active = true;
+        let resizeTimeout;
+        let animationFrame;
+        let cards = [];
+        let route = [];
+        let routeLength = 0;
+        const lapDuration = 110000;
+
+        function createRoute(cardWidth) {
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          const cardHeight = cardWidth * 4 / 3;
+          const contenido = document.querySelector('.container').getBoundingClientRect();
+          const margen = 8;
+          const maxX = Math.max(margen, viewportWidth - cardWidth - margen);
+          const maxY = Math.max(margen, viewportHeight - cardHeight - margen);
+          const topY = Math.min(maxY, Math.max(margen, contenido.top - cardHeight - margen));
+          const bottomY = Math.max(topY, Math.min(maxY, contenido.bottom + margen));
+          const corners = [
+            { x: margen, y: topY },
+            { x: maxX, y: topY },
+            { x: maxX, y: bottomY },
+            { x: margen, y: bottomY }
+          ];
+          const segments = [];
+          let length = 0;
+          for (let index = 0; index < corners.length; index++) {
+            const start = corners[index];
+            const end = corners[(index + 1) % corners.length];
+            const segmentLength = Math.hypot(end.x - start.x, end.y - start.y);
+            if (segmentLength > 0) {
+              segments.push({ start, end, length: segmentLength });
+              length += segmentLength;
+            }
+          }
+          return { segments, length };
+        }
+
+        function pointOnRoute(distance) {
+          let remaining = distance % routeLength;
+          for (const segment of route) {
+            if (remaining <= segment.length) {
+              const progress = remaining / segment.length;
+              return {
+                x: segment.start.x + (segment.end.x - segment.start.x) * progress,
+                y: segment.start.y + (segment.end.y - segment.start.y) * progress
+              };
+            }
+            remaining -= segment.length;
+          }
+          return route[0].start;
+        }
+
+        function animateCards(timestamp) {
+          if (!active || !cards.length || !routeLength) return;
+          const traveled = (timestamp % lapDuration) / lapDuration * routeLength;
+          cards.forEach((elemento, index) => {
+            const point = pointOnRoute(traveled + index * routeLength / cards.length);
+            elemento.style.setProperty('--card-x', `${point.x}px`);
+            elemento.style.setProperty('--card-y', `${point.y}px`);
+          });
+          animationFrame = window.requestAnimationFrame(animateCards);
+        }
+
+        function removeCards() {
+          active = false;
+          window.clearTimeout(resizeTimeout);
+          window.cancelAnimationFrame(animationFrame);
+          cards = [];
+          contenedor.querySelectorAll('.login-player-card').forEach(elemento => {
+            window.clearTimeout(elemento._switchTimeout);
+            elemento.remove();
+          });
+        }
+
+        function renderCards() {
+          removeCards();
+          active = true;
+          const contenido = document.querySelector('.container').getBoundingClientRect();
+          const espacioLateral = Math.min(contenido.left, window.innerWidth - contenido.right);
+          const espacioVertical = Math.min(contenido.top, window.innerHeight - contenido.bottom);
+          const cardWidth = Math.min(
+            64,
+            Math.max(10, espacioLateral - 8),
+            Math.max(10, (espacioVertical - 8) * .75)
+          );
+          const cardHeight = cardWidth * 4 / 3;
+          const generatedRoute = createRoute(cardWidth);
+          route = generatedRoute.segments;
+          routeLength = generatedRoute.length;
+          if (!routeLength) return;
+          const numberOfCards = Math.min(
+            14,
+            cartasValidas.length,
+            Math.max(1, Math.floor(routeLength / (cardHeight * 1.5 + 28)))
+          );
+          const chosenCardIndexes = cartasValidas
+            .map((_, index) => ({ index, order: Math.random() }))
+            .sort((a, b) => a.order - b.order)
+            .slice(0, numberOfCards)
+            .map(item => item.index);
+
+          chosenCardIndexes.forEach(cardIndex => {
+            const elemento = document.createElement('div');
+            elemento.className = 'login-player-card preparando';
+            elemento.style.width = `${cardWidth}px`;
+            elemento.style.setProperty('--card-rotation', `${(Math.random() * 6 - 3).toFixed(1)}deg`);
+            const imagen = document.createElement('img');
+            imagen.src = `/imagenes/jugadores/${encodeURIComponent(cartasValidas[cardIndex])}`;
+            imagen.alt = '';
+            elemento.appendChild(imagen);
+            contenedor.appendChild(elemento);
+            elemento._cardIndex = cardIndex;
+            cards.push(elemento);
+
+            if (!reducirMovimiento) {
+              const changeCard = () => {
+                if (!active || !elemento.isConnected) return;
+                elemento.classList.add('cambiando');
+                window.setTimeout(() => {
+                  if (!active || !elemento.isConnected) return;
+                  let nextIndex = Math.floor(Math.random() * cartasValidas.length);
+                  while (cartasValidas.length > 1 && nextIndex === elemento._cardIndex) {
+                    nextIndex = Math.floor(Math.random() * cartasValidas.length);
+                  }
+                  elemento._cardIndex = nextIndex;
+                  imagen.src = `/imagenes/jugadores/${encodeURIComponent(cartasValidas[nextIndex])}`;
+                  elemento.classList.remove('cambiando');
+                  elemento._switchTimeout = window.setTimeout(changeCard, 30000 + Math.random() * 18000);
+                }, 1200);
+              };
+              elemento._switchTimeout = window.setTimeout(changeCard, 24000 + Math.random() * 18000);
+            }
+            window.requestAnimationFrame(() => elemento.classList.remove('preparando'));
+          });
+          if (reducirMovimiento) {
+            cards.forEach((elemento, index) => {
+              const point = pointOnRoute(index * routeLength / cards.length);
+              elemento.style.setProperty('--card-x', `${point.x}px`);
+              elemento.style.setProperty('--card-y', `${point.y}px`);
+            });
+          } else {
+            animationFrame = window.requestAnimationFrame(animateCards);
+          }
+        }
+
+        renderCards();
+        window.addEventListener('resize', () => {
+          window.clearTimeout(resizeTimeout);
+          resizeTimeout = window.setTimeout(renderCards, 250);
+        });
+      } catch (error) {
+        console.warn('No se pudieron cargar las cartas decorativas del login:', error);
+      }
     }
+
+    cargarCartasDecorativas();
 
     function switchTab(t) {
       ['login','registro','recuperar'].forEach(id => {
