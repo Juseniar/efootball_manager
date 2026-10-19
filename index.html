@@ -106,6 +106,33 @@
       background: linear-gradient(135deg, #e8edf8, #f5f7fc)
     }
 
+    body.modo-claro .comp-select-box.seleccionado-1,
+    body.modo-claro .jcomp-box.sel-1 {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe)
+    }
+
+    body.modo-claro .comp-select-box.seleccionado-2,
+    body.modo-claro .jcomp-box.sel-2 {
+      background: linear-gradient(135deg, #fdf2f8, #fce7f3)
+    }
+
+    body.modo-claro .comp-selected-meta,
+    body.modo-claro .jcomp-selected-meta {
+      color: #475569 !important
+    }
+
+    body.modo-claro .comp-change-btn,
+    body.modo-claro .jcomp-change-btn {
+      color: #334155 !important;
+      border-color: #94a3b8 !important
+    }
+
+    body.modo-claro .comp-pot-badge {
+      background: #f3e8ff;
+      color: #6b21a8;
+      border-color: #c084fc
+    }
+
     body.modo-claro .historial-entry {
       background: #f0f4fc
     }
@@ -830,7 +857,7 @@
       gap: 3px;
       padding: 2px;
       border-radius: 10px;
-      background: rgba(8, 10, 15, .72);
+      background: transparent;
     }
 
     .carta-pot-light {
@@ -862,6 +889,12 @@
       border-color: rgba(190, 205, 215, .3);
       box-shadow: none;
       animation: none;
+    }
+
+    body.modo-claro .carta-pot-light.inactive {
+      color: #f1f5f9;
+      border-color: #cbd5e1;
+      background: #475569;
     }
 
     @keyframes potenciadorNeon {
@@ -1221,7 +1254,11 @@
     }
 
     #ov-det {
-      padding-top: 100px;
+      padding-top: var(--detalle-top, 100px);
+    }
+
+    #ov-form {
+      padding-top: var(--form-top, 80px);
     }
 
     .modal {
@@ -4416,7 +4453,11 @@
       }
 
       #ov-det {
-        padding-top: 84px;
+        padding-top: var(--detalle-top, 84px);
+      }
+
+      #ov-form {
+        padding-top: var(--form-top, 72px);
       }
 
       .modal,
@@ -6236,7 +6277,19 @@
 
       .header {
         gap: 6px;
-        padding: 0 10px
+        padding: 0 10px;
+        position: sticky
+      }
+
+      #user-info {
+        position: absolute;
+        top: 7px;
+        right: 10px;
+        z-index: 2
+      }
+
+      #user-info > span {
+        display: none
       }
 
       .logo span {
@@ -6434,6 +6487,11 @@
     // ── Estado global ─────────────────────────────────────────────────────────────
     let jugadores = [], tecnicos = [], carpetas = [], partidos = [], escudosCache = [];
     let tab = 'inicio', tecActual = null, editId = null, sortJug = 'ovr-desc', sortCarp = 'ovr-desc';
+    let jugadorDetalleRadar = null;
+    const TABS_VALIDAS = new Set([
+      'inicio', 'jugadores', 'tecnicos', 'xi', 'goleadores',
+      'comparar', 'jcomparar', 'stats', 'admin'
+    ]);
     let comparT1 = null, comparT2 = null;
     let comparJ1 = null, comparJ2 = null;
 
@@ -7167,6 +7225,7 @@
     }
 
     function mostrarDetalle(j, cEntry, soloLectura = false) {
+      jugadorDetalleRadar = j;
       const base = cEntry ? (j._base || {}) : j;
       const renderStat = (k, n) => {
         const v = parseInt(j[k]) || 0; if (!v) return '';
@@ -7242,7 +7301,15 @@
       ${mejorTecnicoSection(j.id || (j._base && j._base.id) || '', cEntry ? (j._base && j._base.overall) || '' : j.overall || '')}
       ${!cEntry ? `<div class="sec">📜 Historial de Stats</div><div id="det-historial" style="color:var(--apagado);font-size:.82rem;padding:6px 0">Cargando...</div>` : ''}
     </div>`;
-      document.getElementById('ov-det').classList.remove('oculto');
+      const overlay = document.getElementById('ov-det');
+      const header = document.querySelector('.header');
+      if (header && window.matchMedia('(max-width: 680px)').matches) {
+        const headerBottom = Math.max(0, header.getBoundingClientRect().bottom);
+        overlay.style.setProperty('--detalle-top', `${Math.ceil(headerBottom + 8)}px`);
+      } else {
+        overlay.style.removeProperty('--detalle-top');
+      }
+      overlay.classList.remove('oculto');
     }
 
     // ── Formularios ───────────────────────────────────────────────────────────────
@@ -7546,7 +7613,15 @@
         <button type="submit" class="btn-guardar">💾 Guardar Técnico</button>
       </div>
     </div></form></div>`;
-      document.getElementById('ov-form').classList.remove('oculto');
+      const formOverlay = document.getElementById('ov-form');
+      const header = document.querySelector('.header');
+      if (header) {
+        const headerBottom = Math.max(0, header.getBoundingClientRect().bottom);
+        formOverlay.style.setProperty('--form-top', `${Math.ceil(headerBottom + 12)}px`);
+      } else {
+        formOverlay.style.removeProperty('--form-top');
+      }
+      formOverlay.classList.remove('oculto');
       bindForm('FORM', '/api/tecnicos', editId, 'multipart');
     }
 
@@ -7832,8 +7907,10 @@
     }
 
     function cambiarTab(t) {
+      if (!TABS_VALIDAS.has(t)) return;
       if (tab === 'carpeta') cerrarCarpeta();
       tab = t;
+      sessionStorage.setItem('efm_tab_activa', t);
       document.getElementById('tab-inicio').classList.toggle('activo', t === 'inicio');
       document.getElementById('tab-j').classList.toggle('activo', t === 'jugadores');
       document.getElementById('tab-t').classList.toggle('activo', t === 'tecnicos');
@@ -9641,11 +9718,11 @@
       el.innerHTML = `
     <div class="comp-selectors">
       <div class="comp-select-box ${comparT1 ? 'seleccionado-1' : ''}" style="cursor:default" id="comp-box-1">
-        ${comparT1 ? _miniCoach(comparT1, '#60a5fa') : _gridTec(1, '#60a5fa')}
+        ${comparT1 ? _miniCoach(comparT1, '#60a5fa', _jPorCarpeta(comparT1.id).length) : _gridTec(1, '#60a5fa')}
       </div>
       <div class="comp-vs">VS</div>
       <div class="comp-select-box ${comparT2 ? 'seleccionado-2' : ''}" style="cursor:default" id="comp-box-2">
-        ${comparT2 ? _miniCoach(comparT2, '#f472b6') : _gridTec(2, '#f472b6')}
+        ${comparT2 ? _miniCoach(comparT2, '#f472b6', _jPorCarpeta(comparT2.id).length) : _gridTec(2, '#f472b6')}
       </div>
     </div>
     ${comparT1 && comparT2 ? _buildComparacion() : _placeholderComp()}`;
@@ -9657,7 +9734,7 @@
       renderComparador();
     }
 
-    function _miniCoach(t, color) {
+    function _miniCoach(t, color, playerCount) {
       const slot = color === '#60a5fa' ? 1 : 2;
       return `
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%">
@@ -9666,11 +9743,12 @@
           : `<div style="width:80px;height:80px;border-radius:12px;background:var(--oscuro);border:2px solid ${color}44;display:flex;align-items:center;justify-content:center;font-size:2.5rem">🧑‍💼</div>`}
       <div style="text-align:center;flex:1;min-width:0">
         <div style="font-weight:700;font-size:1rem;color:${color};word-break:break-word">${t.nombre}</div>
-        <div style="font-size:.75rem;color:var(--apagado);margin-top:2px">${t.edicion || ''}</div>
-        ${t.formacion ? `<div style="font-size:.75rem;color:var(--apagado)">${t.formacion}</div>` : ''}
+        <div class="comp-selected-meta" style="font-size:.75rem;color:var(--apagado);margin-top:2px">${t.edicion || ''}</div>
+        ${t.formacion ? `<div class="comp-selected-meta" style="font-size:.75rem;color:var(--apagado)">${t.formacion}</div>` : ''}
+        <div class="comp-selected-meta" style="font-size:.75rem;color:var(--apagado)">${playerCount} jugadores</div>
         ${t.fuerza_colectiva ? `<div class="comp-fuerza" style="font-size:1.2rem;margin-top:2px">⚡${t.fuerza_colectiva}</div>` : ''}
       </div>
-      <button onclick="seleccionarComp(${slot},'')"
+      <button class="comp-change-btn" onclick="seleccionarComp(${slot},'')"
         style="background:none;border:1px solid var(--borde);border-radius:6px;color:var(--apagado);
           cursor:pointer;font-size:.75rem;padding:4px 10px;transition:all .15s"
         onmouseover="this.style.borderColor='var(--rojo)';this.style.color='var(--rojo)'"
@@ -9792,30 +9870,6 @@
       }).join('') : '';
 
       return `
-    <!-- ENCABEZADO COMPARACIÓN -->
-    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin-bottom:16px;align-items:center">
-      <div style="background:linear-gradient(135deg,#0e1a30,var(--card));border:1px solid #60a5fa33;
-        border-radius:12px;padding:14px;text-align:center">
-        ${t1.imagen
-          ? `<img src="${t1.imagen}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;border:2px solid #60a5fa;margin-bottom:8px">`
-          : `<div style="width:64px;height:64px;border-radius:10px;background:var(--oscuro);border:2px solid #60a5fa33;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 8px">🧑‍💼</div>`}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#60a5fa">${t1.nombre}</div>
-        <div style="font-size:.78rem;color:var(--apagado)">${t1.formacion || ''} · ${j1.length} jugadores</div>
-        ${t1.fuerza_colectiva ? `<div class="comp-fuerza" style="font-size:1.5rem">⚡${t1.fuerza_colectiva}</div>` : ''}
-      </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--oro);
-        text-align:center;padding:0 8px">VS</div>
-      <div style="background:linear-gradient(135deg,#1a0e20,var(--card));border:1px solid #f472b633;
-        border-radius:12px;padding:14px;text-align:center">
-        ${t2.imagen
-          ? `<img src="${t2.imagen}" style="width:64px;height:64px;border-radius:10px;object-fit:cover;border:2px solid #f472b6;margin-bottom:8px">`
-          : `<div style="width:64px;height:64px;border-radius:10px;background:var(--oscuro);border:2px solid #f472b633;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 8px">🧑‍💼</div>`}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#f472b6">${t2.nombre}</div>
-        <div style="font-size:.78rem;color:var(--apagado)">${t2.formacion || ''} · ${j2.length} jugadores</div>
-        ${t2.fuerza_colectiva ? `<div class="comp-fuerza" style="font-size:1.5rem">⚡${t2.fuerza_colectiva}</div>` : ''}
-      </div>
-    </div>
-
     <!-- ESTILOS DE JUEGO -->
     ${estilosHtml ? `<div class="comp-bloque" style="margin-bottom:14px">
       <div class="comp-bloque-titulo">🎮 Dom. del Estilo de Juego
@@ -9910,6 +9964,13 @@
       const btn = document.getElementById('modo-btn');
       if (btn) btn.textContent = claro ? '☀️' : '🌙';
       try { localStorage.setItem('efm_modo', claro ? 'claro' : 'oscuro'); } catch (e) { }
+      if (jugadorDetalleRadar && document.getElementById('radar-canvas')) {
+        drawRadar(jugadorDetalleRadar);
+      }
+      if (comparJ1 && comparJ2) {
+        drawRadar2(comparJ1, '#60a5fa', 'radar-j1');
+        drawRadar2(comparJ2, '#f472b6', 'radar-j2');
+      }
     }
 
     function initModo() {
@@ -9946,6 +10007,12 @@
 
       const W = 280, H = 280, cx = 140, cy = 140, R = 105, N = ejes.length;
       const ctx = canvas.getContext('2d');
+      const colorClaro = document.body.classList.contains('modo-claro');
+      const colorGrid = colorClaro ? 'rgba(15, 23, 42, .18)' : 'rgba(255,255,255,.08)';
+      const colorGridFill = colorClaro ? 'rgba(15, 23, 42, .025)' : 'rgba(255,255,255,.025)';
+      const colorEscala = colorClaro ? 'rgba(15, 23, 42, .58)' : 'rgba(255,255,255,.3)';
+      const colorEjes = colorClaro ? 'rgba(15, 23, 42, .28)' : 'rgba(255,255,255,.15)';
+      const colorValor = colorClaro ? '#0f172a' : '#fff';
       ctx.clearRect(0, 0, W, H);
 
       const pt = (r, i) => [cx + r * Math.sin(2 * Math.PI * i / N - Math.PI / 2), cy - r * Math.cos(2 * Math.PI * i / N - Math.PI / 2)];
@@ -9956,10 +10023,10 @@
         ctx.beginPath();
         for (let i = 0; i < N; i++) { const [x, y] = pt(r, i); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
         ctx.closePath();
-        ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,.025)'; ctx.fill();
+        ctx.strokeStyle = colorGrid; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = colorGridFill; ctx.fill();
         // Label
-        ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = '8px Inter'; ctx.textAlign = 'center';
+        ctx.fillStyle = colorEscala; ctx.font = '8px Inter'; ctx.textAlign = 'center';
         ctx.fillText(pct, (cx + 0 + (R * pct / 100) * .15).toFixed(), cy - R * pct / 100 - 2);
       });
 
@@ -9967,7 +10034,7 @@
       for (let i = 0; i < N; i++) {
         const [x, y] = pt(R, i);
         ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
-        ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = colorEjes; ctx.lineWidth = 1; ctx.stroke();
         // Axis label
         const [lx, ly] = pt(R + 20, i);
         ctx.fillStyle = ejes[i].color; ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
@@ -9991,7 +10058,7 @@
         ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.stroke();
         // Value label
         const [dx, dy] = pt(R * v / 100 + 14, i);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
+        ctx.fillStyle = colorValor; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
         ctx.textBaseline = 'middle'; ctx.fillText(Math.round(v), dx, dy);
       });
 
@@ -10069,10 +10136,10 @@
           : `<div style="width:72px;height:72px;border-radius:10px;background:var(--oscuro);border:2px solid ${color}44;display:flex;align-items:center;justify-content:center;font-size:2.5rem">🧑</div>`}
       <div style="text-align:center;flex:1;min-width:0">
         <div style="font-weight:700;font-size:1rem;color:${color};word-break:break-word">${j.nombre}</div>
-        <div style="font-size:.75rem;color:var(--apagado);margin-top:2px">${j.posicion || ''} · OVR ${j.overall || '—'}</div>
-        ${j.edicion ? `<div style="font-size:.72rem;color:var(--verde);margin-top:2px">${j.edicion}</div>` : ''}
+        <div class="jcomp-selected-meta" style="font-size:.75rem;color:var(--apagado);margin-top:2px">${j.posicion || ''}${j.edicion ? ` · ${j.edicion}` : ''}</div>
+        <div class="comp-fuerza" style="font-size:1.3rem;margin-top:4px">⚡${j.overall || '—'}</div>
       </div>
-      <button onclick="selJComp(${slot},'')"
+      <button class="jcomp-change-btn" onclick="selJComp(${slot},'')"
         style="background:none;border:1px solid var(--borde);border-radius:6px;color:var(--apagado);
           cursor:pointer;font-size:.75rem;padding:4px 10px;transition:all .15s"
         onmouseover="this.style.borderColor='var(--rojo)';this.style.color='var(--rojo)'"
@@ -10135,32 +10202,6 @@
         seccCol(SF, '⚡ Fuerza');
 
       return `
-    <!-- Encabezado ganador -->
-    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;
-      align-items:center;margin-bottom:16px">
-      <div style="background:linear-gradient(135deg,#0e1a30,var(--card));
-        border:1px solid #60a5fa33;border-radius:12px;padding:12px;text-align:center">
-        ${j1.imagen
-          ? `<img src="${j1.imagen}" style="width:72px;height:88px;border-radius:10px;object-fit:cover;object-position:top;border:2px solid #60a5fa;margin-bottom:8px">`
-          : `<div style="width:72px;height:72px;border-radius:10px;background:var(--oscuro);border:2px solid #60a5fa33;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 8px">🧑</div>`}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#60a5fa">${j1.nombre}</div>
-        <div style="font-size:.78rem;color:var(--apagado)">${j1.posicion || ''} · ${j1.edicion || ''}</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--oro);margin-top:4px">${j1.overall || '—'}</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--oro)">VS</div>
-      </div>
-      <div style="background:linear-gradient(135deg,#1a0e20,var(--card));
-        border:1px solid #f472b633;border-radius:12px;padding:12px;text-align:center">
-        ${j2.imagen
-          ? `<img src="${j2.imagen}" style="width:72px;height:88px;border-radius:10px;object-fit:cover;object-position:top;border:2px solid #f472b6;margin-bottom:8px">`
-          : `<div style="width:72px;height:72px;border-radius:10px;background:var(--oscuro);border:2px solid #f472b633;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 8px">🧑</div>`}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#f472b6">${j2.nombre}</div>
-        <div style="font-size:.78rem;color:var(--apagado)">${j2.posicion || ''} · ${j2.edicion || ''}</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--oro);margin-top:4px">${j2.overall || '—'}</div>
-      </div>
-    </div>
-
     <!-- Radar side by side -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div style="background:var(--card);border:1px solid #60a5fa33;border-radius:12px;padding:10px;text-align:center">
@@ -10238,17 +10279,21 @@
       const vals = ejes.map(e => Math.min(100, e.keys.reduce((s, k) => s + (parseInt(j[k]) || 0), 0) / e.keys.length));
       const W = 200, H = 200, cx = 100, cy = 100, R = 72, N = 6;
       const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, W, H);
+      const colorClaro = document.body.classList.contains('modo-claro');
+      const colorGrid = colorClaro ? 'rgba(15, 23, 42, .2)' : 'rgba(255,255,255,.08)';
+      const colorAxis = colorClaro ? 'rgba(15, 23, 42, .3)' : 'rgba(255,255,255,.12)';
+      const colorLabel = colorClaro ? '#334155' : 'rgba(255,255,255,.5)';
       const pt = (r, i) => [cx + r * Math.sin(2 * Math.PI * i / N - Math.PI / 2), cy - r * Math.cos(2 * Math.PI * i / N - Math.PI / 2)];
       [25, 50, 75, 100].forEach(p => {
         const r = R * p / 100; ctx.beginPath();
         for (let i = 0; i < N; i++) { const [x, y] = pt(r, i); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-        ctx.closePath(); ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.closePath(); ctx.strokeStyle = colorGrid; ctx.lineWidth = 1; ctx.stroke();
       });
       for (let i = 0; i < N; i++) {
         const [x, y] = pt(R, i); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
-        ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = colorAxis; ctx.lineWidth = 1; ctx.stroke();
         const [lx, ly] = pt(R + 14, i);
-        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = 'bold 9px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = colorLabel; ctx.font = 'bold 9px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(ejes[i].label, lx, ly);
       }
       ctx.beginPath();
@@ -10904,6 +10949,9 @@
       } catch {
         window.location.replace('/login'); return;
       }
+
+      const tabGuardada = sessionStorage.getItem('efm_tab_activa');
+      if (TABS_VALIDAS.has(tabGuardada)) cambiarTab(tabGuardada);
 
       // Detectar boton atras del navegador (bfcache) y verificar sesion
       window.addEventListener('pageshow', e => {

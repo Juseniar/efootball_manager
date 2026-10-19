@@ -18,11 +18,12 @@ LOCAL_REQUIREMENTS = ROOT / "requirements-local.txt"
 LOG_PATH = INSTANCE / "launcher.log"
 SERVER_LOG_PATH = INSTANCE / "server.log"
 PORT = 5000
-PORT_SEARCH_ATTEMPTS = 20
+LAN_HOST = os.environ.get("EFOOTBALL_LAN_HOST", "192.168.40.3")
+BIND_HOST = "0.0.0.0"
 
 
-def app_url(port):
-    return f"http://127.0.0.1:{port}"
+def app_url(port, host="127.0.0.1"):
+    return f"http://{host}:{port}"
 
 
 def venv_python():
@@ -64,7 +65,9 @@ def install_local_dependencies(log):
 
 def server_ready(port):
     try:
-        with urllib.request.urlopen(f"{app_url(port)}/api/health", timeout=1) as response:
+        with urllib.request.urlopen(
+            f"{app_url(port, LAN_HOST)}/api/health", timeout=1
+        ) as response:
             return (
                 response.status == 200
                 and response.headers.get("X-Application-Framework") == "Django"
@@ -79,14 +82,14 @@ def port_available(port):
 
 
 def find_available_port():
-    for port in range(PORT, PORT + PORT_SEARCH_ATTEMPTS):
-        if server_ready(port):
-            return port, False
-        if port_available(port):
-            return port, True
+    if server_ready(PORT):
+        return PORT, False
+    if port_available(PORT):
+        return PORT, True
     raise RuntimeError(
-        f"No hay puertos disponibles entre {PORT} y "
-        f"{PORT + PORT_SEARCH_ATTEMPTS - 1}."
+        f"El puerto {PORT} ya está ocupado por otro proceso. "
+        "Ciérralo y vuelve a abrir el lanzador; la aplicación solo usa "
+        f"el puerto {PORT}."
     )
 
 
@@ -99,7 +102,7 @@ def start_server(python, server_log, port):
         str(ROOT / "manage.py"),
         "runserver",
         "--noreload",
-        f"127.0.0.1:{port}",
+        f"{BIND_HOST}:{port}",
     ]
     options = {
         "cwd": ROOT,
@@ -143,7 +146,7 @@ def main():
             log.write("\nPreparando eFootball Manager...\n")
             python = install_local_dependencies(log)
             port, should_start = find_available_port()
-            url = app_url(port)
+            url = app_url(port, LAN_HOST)
             log.write(f"Abriendo la aplicación en {url}\n")
 
             if should_start:
