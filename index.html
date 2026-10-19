@@ -1769,8 +1769,11 @@
     }
 
     .campo-circulo {
+      position: relative;
+      flex: none;
       width: 48px;
       height: 48px;
+      box-sizing: border-box;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, .8);
       overflow: hidden;
@@ -1787,10 +1790,14 @@
     }
 
     .campo-circulo img {
+      position: absolute;
+      inset: 0;
+      display: block;
       width: 100%;
       height: 100%;
+      max-width: none;
       object-fit: cover;
-      object-position: top
+      object-position: center 25%
     }
 
     .campo-circulo-empty {
@@ -7930,15 +7937,54 @@
       }
     }
 
+    function identidadJugadorPlantilla(jugador) {
+      const nombre = String(jugador?.nombre || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim()
+        .toLowerCase();
+      return nombre || `id:${jugador?.jugador_id || jugador?.id || jugador?.cid || ''}`;
+    }
+
+    function idJugadorPlantilla(jugador) {
+      return String(jugador?.jugador_id || jugador?.id || '').trim().toLowerCase();
+    }
+
+    function deduplicarPlantilla(jugadoresLista) {
+      const nombres = new Set();
+      const ids = new Set();
+      return [...(Array.isArray(jugadoresLista) ? jugadoresLista : [])].filter(jugador => {
+          const nombre = identidadJugadorPlantilla(jugador);
+          const id = idJugadorPlantilla(jugador);
+          if (nombres.has(nombre) || (id && ids.has(id))) return false;
+          nombres.add(nombre);
+          if (id) ids.add(id);
+          return true;
+        });
+    }
+
+    function nombreCampoPlantilla(jugador, lista) {
+      const partes = String(jugador?.nombre || '').trim().split(/\s+/).filter(Boolean);
+      const apellido = partes[partes.length - 1] || '';
+      const colisiones = lista.filter(otro => {
+        const nombreOtro = String(otro?.nombre || '').trim().split(/\s+/).filter(Boolean);
+        return (nombreOtro[nombreOtro.length - 1] || '').toLocaleLowerCase() === apellido.toLocaleLowerCase();
+      }).length;
+      return colisiones > 1 && partes.length > 1 ? partes.join(' ') : apellido;
+    }
+
     function autoAsignar(lines, jugsCarpeta) {
       const usados = new Set();
-      const sorted = [...jugsCarpeta].sort((a, b) =>
-        (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0));
+      const sorted = deduplicarPlantilla([...jugsCarpeta]
+        .sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0)));
       return lines.map(line =>
         line.map(pos => {
           const compat = COMPAT[pos] || [pos];
-          const jug = sorted.find(p => !usados.has(p.cid) && compat.includes(p.posicion));
-          if (jug) usados.add(jug.cid);
+          const jug = sorted.find(p =>
+            !usados.has(identidadJugadorPlantilla(p)) && compat.includes(p.posicion));
+          if (jug) usados.add(identidadJugadorPlantilla(jug));
           return { pos, jug: jug || null };
         })
       );
@@ -7968,16 +8014,25 @@
       });
       plantillaActual = [];
       const colocados = new Set();
+      const identidadesColocadas = new Set();
+      const idsColocados = new Set();
 
       for (const guardada of alineacion.posiciones) {
         if (plantillaActual.length >= 11 || colocados.has(guardada.cid)) continue;
         const jugador = jugsCarpeta.find(j => j.cid === guardada.cid);
-        if (!jugador) continue;
+        const identidad = identidadJugadorPlantilla(jugador);
+        const idJugador = idJugadorPlantilla(jugador);
+        if (!jugador || identidadesColocadas.has(identidad) || (idJugador && idsColocados.has(idJugador))) continue;
         plantillaActual.push({ ...jugador, x: guardada.x, y: guardada.y, pos: guardada.pos });
         colocados.add(guardada.cid);
+        identidadesColocadas.add(identidad);
+        if (idJugador) idsColocados.add(idJugador);
       }
 
-      const asignacion = autoAsignar(lineas, jugsCarpeta.filter(j => !colocados.has(j.cid)));
+      const asignacion = autoAsignar(lineas, jugsCarpeta.filter(j =>
+        !colocados.has(j.cid) &&
+        !identidadesColocadas.has(identidadJugadorPlantilla(j)) &&
+        !idsColocados.has(idJugadorPlantilla(j))));
       const cantidadLineas = asignacion.length;
       asignacion.forEach((linea, indiceLinea) => {
         const y = cantidadLineas === 1 ? 50 : 85 - ((85 - 12) / (cantidadLineas - 1)) * indiceLinea;
@@ -8108,6 +8163,7 @@
 
     function renderCampo(tid) {
       const t = tecnicos.find(x => x.id === tid) || {};
+      plantillaActual = deduplicarPlantilla(plantillaActual);
 
       const fieldSvg = `<svg viewBox="0 0 460 620" xmlns="http://www.w3.org/2000/svg"
     style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
@@ -8124,7 +8180,7 @@
   </svg>`;
 
       const slotsHtml = plantillaActual.map(p => {
-        const apellido = (p.nombre || '').split(' ').slice(-1)[0];
+        const apellido = nombreCampoPlantilla(p, plantillaActual);
         return `<div class="campo-slot" data-cid="${p.cid}"
       style="position:absolute;left:${p.x}%;top:${p.y}%;
         transform:translate(-50%,-50%);display:flex;flex-direction:column;
@@ -8134,7 +8190,7 @@
       ondblclick="abrirSwapModal('${p.cid}')">
       <div class="campo-pos">${p.pos || p.posicion || ''}</div>
       <div class="campo-circulo">
-        ${p.imagen ? `<img src="${p.imagen}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top">`
+        ${p.imagen ? `<img src="${p.imagen}" alt="" style="position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center 25%">`
             : `<span style="font-size:1.4rem">🧑</span>`}
       </div>
       <div class="campo-ovr">${p.overall || '—'}</div>
@@ -8263,6 +8319,7 @@
 
     async function guardarPlantilla(tid) {
       if (!tid) return;
+      plantillaActual = deduplicarPlantilla(plantillaActual);
       const posiciones = plantillaActual.map(p => ({ cid: p.cid, jugador_id: p.jugador_id, x: p.x, y: p.y, pos: p.pos || p.posicion || '' }));
       let alineacion = alineacionesPlantilla.find(a => a.id === alineacionActivaId);
       if (!alineacion) {
@@ -8728,7 +8785,8 @@
     // ── EXPORTAR PNG (canvas manual, alta calidad) ────────────────────────────────
     async function exportarPlantillaPng(tid) {
       const t = tecnicos.find(x => x.id === tid) || {};
-      const btn = document.querySelector('.campo-export-bar .btn-sm-oro');
+      plantillaActual = deduplicarPlantilla(plantillaActual);
+      const btn = document.querySelector('.campo-export-bar button[onclick^="exportarPlantillaPng"]');
       if (btn) { btn.textContent = '⏳ Generando...'; btn.disabled = true; }
 
       const W = 920, H = 1240, R = 46;
@@ -8786,9 +8844,17 @@
 
         // Photo
         if (imgMap[p.cid]) {
+          const img = imgMap[p.cid];
+          const size = (R - 2) * 2;
+          const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+          const cropWidth = size / scale;
+          const cropHeight = size / scale;
+          const sx = (img.naturalWidth - cropWidth) * 0.5;
+          const sy = (img.naturalHeight - cropHeight) * 0.25;
           ctx.save();
           ctx.beginPath(); ctx.arc(cx, cy, R - 2, 0, Math.PI * 2); ctx.clip();
-          ctx.drawImage(imgMap[p.cid], cx - R + 2, cy - R + 2, (R - 2) * 2, (R - 2) * 2);
+          ctx.drawImage(img, sx, sy, cropWidth, cropHeight,
+            cx - (R - 2), cy - (R - 2), size, size);
           ctx.restore();
         }
 
@@ -9446,16 +9512,8 @@
       });
       if (!jugsCarp.length) return { campoHtml: `<p style="color:var(--apagado);font-size:.85rem;padding:8px 0">Añade jugadores a la carpeta para ver el Mejor XI.</p>`, supsHtml: '' };
 
-      const sorted = [...jugsCarp].sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0));
-      const identidadJugador = jugador => {
-        const nombre = String(jugador.nombre || '')
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .trim()
-          .replace(/\s+/g, ' ')
-          .toLowerCase();
-        return nombre || `id:${jugador.jugador_id || jugador.id || jugador.cid}`;
-      };
+      const sorted = deduplicarPlantilla([...jugsCarp]
+        .sort((a, b) => (parseInt(b.overall) || 0) - (parseInt(a.overall) || 0)));
       const usados = new Set();
       const titulares = [];
       const nL = lines.length;
@@ -9464,16 +9522,16 @@
         const yP = nL === 1 ? 50 : 85 - ((85 - 12) / (nL - 1)) * li;
         line.forEach((pos, pi) => {
           const compat = COMPAT[pos] || [pos];
-          const jug = sorted.find(j => !usados.has(identidadJugador(j)) && compat.includes(j.posicion));
+          const jug = sorted.find(j => !usados.has(identidadJugadorPlantilla(j)) && compat.includes(j.posicion));
           const xP = line.length === 1 ? 50 : 10 + (80 / (line.length - 1)) * pi;
-          if (jug) { usados.add(identidadJugador(jug)); titulares.push({ ...jug, x: xP, y: yP, pos }); }
+          if (jug) { usados.add(identidadJugadorPlantilla(jug)); titulares.push({ ...jug, x: xP, y: yP, pos }); }
           else titulares.push({ x: xP, y: yP, pos, vacio: true });
         });
       });
 
       const suplentes = [];
       for (const jugador of sorted) {
-        const identidad = identidadJugador(jugador);
+        const identidad = identidadJugadorPlantilla(jugador);
         if (usados.has(identidad)) continue;
         usados.add(identidad);
         suplentes.push(jugador);
@@ -9497,13 +9555,13 @@
       <div class="campo-pos" style="font-size:.5rem">${p.pos}</div>
       <div class="campo-circulo-empty" style="width:34px;height:34px;font-size:.9rem">?</div>
     </div>`;
-        const apellido = (p.nombre || '').split(' ').slice(-1)[0];
+        const apellido = nombreCampoPlantilla(p, titulares.filter(jugador => !jugador.vacio));
         return `<div style="position:absolute;left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%);
       display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;z-index:2"
       onclick="verCarpetaEntry('${p.cid}')">
       <div class="campo-pos" style="font-size:.5rem">${p.pos}</div>
       <div class="campo-circulo" style="width:34px;height:34px">
-        ${p.imagen ? `<img src="${p.imagen}" style="width:100%;height:100%;object-fit:cover;object-position:top">` : `<span style="font-size:.9rem">🧑</span>`}
+        ${p.imagen ? `<img src="${p.imagen}" style="position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;object-fit:cover;object-position:center 25%">` : `<span style="font-size:.9rem">🧑</span>`}
       </div>
       <div class="campo-ovr" style="font-size:.6rem;padding:1px 4px">${p.overall || '—'}</div>
       <div class="campo-nombre" style="font-size:.5rem;max-width:48px">${apellido}</div>
@@ -10786,7 +10844,15 @@
 
     // ── Service Worker ─────────────────────────────────────────────────────────
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => { });
+      let recargaPorServiceWorker = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargaPorServiceWorker) return;
+        recargaPorServiceWorker = true;
+        window.location.reload();
+      });
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then(registration => registration.update())
+        .catch(error => console.error('No se pudo actualizar el service worker:', error));
     }
 
     function ejecutarHerramienta(v) {

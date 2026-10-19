@@ -1,5 +1,5 @@
 // eFootball Manager - Service Worker v3.1
-const CACHE = 'efm-v3.12';
+const CACHE = 'efm-v3.13';
 const ASSETS = ['/'];
 
 self.addEventListener('install', e => {
@@ -26,6 +26,23 @@ self.addEventListener('fetch', e => {
         new Response(JSON.stringify({ error: 'offline' }), {
           headers: { 'Content-Type': 'application/json' }
         })
+      )
+    );
+    return;
+  }
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() =>
+        caches.match(e.request).then(cached =>
+          cached || new Response('Sin conexión', { status: 503, statusText: 'Offline' })
+        )
       )
     );
     return;
