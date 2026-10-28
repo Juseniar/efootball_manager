@@ -236,12 +236,12 @@ def migrate():
         )
 
     engine = create_engine(normalize_database_url(database_url), pool_pre_ping=True)
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(engine)
     stats = {"inserted": 0, "restored": 0, "conflicts": 0}
     db.metadata.create_all(engine)
 
     try:
-        with Session.begin() as session:
+        with Session() as session, session.begin():
             for username, user_data in users.items():
                 values = {
                     "username": username,

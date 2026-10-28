@@ -628,10 +628,10 @@ def admin_yo():
 if __name__ == "__main__":
     import webbrowser
     print("\n[eFootball Manager v3] Multi-usuario (SQLite)")
-    print("   http://localhost:5000\n")
-    webbrowser.open("http://localhost:5000")
+    print("   http://192.168.40.10:5000\n")
+    webbrowser.open("http://192.168.40.10:5000")
     app.run(
-        host="127.0.0.1",
+        host="0.0.0.0",
         debug=False,
         port=int(os.environ.get("EFOOTBALL_PORT", "5000")),
     )

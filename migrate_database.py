@@ -2,9 +2,10 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import cast
 
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, inspect, select, text
+from sqlalchemy.orm import Mapper, sessionmaker
 
 from models import (
     Coach,
@@ -82,8 +83,8 @@ def serialize_conflict_row(values, model):
 def migrate_databases(source_engine, target_engine, source_identifier=None):
     db.metadata.create_all(target_engine)
     source_tables = set(inspect(source_engine).get_table_names())
-    target_session = sessionmaker(bind=target_engine)()
-    source_session = sessionmaker(bind=source_engine)()
+    target_session = sessionmaker(target_engine)()
+    source_session = sessionmaker(source_engine)()
     source_key = get_source_key(source_engine, source_identifier)
     conflicts = 0
 
@@ -94,12 +95,12 @@ def migrate_databases(source_engine, target_engine, source_identifier=None):
                 print(f"Skipping missing source table: {table_name}")
                 continue
 
-            mapper = inspect(model)
+            mapper = cast(Mapper, inspect(model))
             inserted = 0
             skipped = 0
             rekeyed = 0
             table_conflicts = 0
-            for row in source_session.query(model).yield_per(500):
+            for row in source_session.execute(select(model)).scalars().yield_per(500):
                 values = {
                     column.key: getattr(row, column.key)
                     for column in mapper.column_attrs
@@ -121,24 +122,22 @@ def migrate_databases(source_engine, target_engine, source_identifier=None):
                     natural_key = {
                         key: value for key, value in values.items() if key != "id"
                     }
-                    matching_query = target_session.query(model)
+                    stmt = select(model)
                     for key, value in natural_key.items():
-                        column = getattr(model, key)
-                        matching_query = matching_query.filter(
-                            column.is_(None) if value is None else column == value
+                        col = getattr(model, key)
+                        stmt = stmt.where(
+                            col.is_(None) if value is None else col == value
                         )
-                    matching_rows = matching_query.order_by(model.id).all()
+                    stmt = stmt.order_by(model.id)
+                    matching_rows = list(target_session.execute(stmt).scalars())
                     unclaimed_match = next(
                         (
                             candidate
                             for candidate in matching_rows
-                            if target_session.query(MigrationRecord)
-                            .filter_by(
-                                source_key=source_key,
-                                table_name=table_name,
-                                target_id=candidate.id,
+                            if target_session.get(
+                                MigrationRecord,
+                                (source_key, table_name, str(candidate.id)),
                             )
-                            .first()
                             is None
                         ),
                         None,

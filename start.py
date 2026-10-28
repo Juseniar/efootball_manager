@@ -18,8 +18,22 @@ LOCAL_REQUIREMENTS = ROOT / "requirements-local.txt"
 LOG_PATH = INSTANCE / "launcher.log"
 SERVER_LOG_PATH = INSTANCE / "server.log"
 PORT = 5000
-LAN_HOST = os.environ.get("EFOOTBALL_LAN_HOST", "192.168.40.3")
 BIND_HOST = "0.0.0.0"
+
+
+def _detect_lan_ip():
+    """Return the LAN IP of this machine, or 127.0.0.1 as fallback."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+LAN_HOST = os.environ.get("EFOOTBALL_LAN_HOST", "") or os.environ.get(
+    "EFOOTBALL_FIXED_LAN_HOST", ""
+) or "192.168.40.10"
 
 
 def app_url(port, host="127.0.0.1"):
@@ -66,13 +80,13 @@ def install_local_dependencies(log):
 def server_ready(port):
     try:
         with urllib.request.urlopen(
-            f"{app_url(port, LAN_HOST)}/api/health", timeout=1
+            f"{app_url(port, '127.0.0.1')}/api/health", timeout=2
         ) as response:
             return (
                 response.status == 200
                 and response.headers.get("X-Application-Framework") == "Django"
             )
-    except (urllib.error.HTTPError, urllib.error.URLError):
+    except (urllib.error.HTTPError, urllib.error.URLError, OSError):
         return False
 
 
@@ -140,6 +154,7 @@ def show_error(message):
 
 
 def main():
+    server_only = "--server-only" in sys.argv[1:]
     INSTANCE.mkdir(parents=True, exist_ok=True)
     try:
         with LOG_PATH.open("a", encoding="utf-8") as log:
@@ -172,6 +187,9 @@ def main():
                             process.terminate()
                             process.wait(timeout=5)
                             raise
+
+        if server_only:
+            return
 
         if not webbrowser.open(url):
             raise RuntimeError(
