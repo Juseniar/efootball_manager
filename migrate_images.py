@@ -116,7 +116,7 @@ def main():
     data_dir = Path(os.environ.get("DATA_DIR", "efootball_data"))
     ensure_public_bucket()
     engine = create_engine(normalize_database_url(database_url), pool_pre_ping=True)
-    session = sessionmaker(bind=engine)()
+    session = sessionmaker(engine)()
     uploaded_urls = {}
     try:
         for model in (Player, Coach, GoalTracker):

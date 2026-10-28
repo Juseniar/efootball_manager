@@ -898,10 +898,13 @@
     }
 
     @keyframes potenciadorNeon {
-      0%, 100% {
+
+      0%,
+      100% {
         opacity: .48;
         box-shadow: 0 0 2px rgba(57, 255, 20, .35), inset 0 0 2px rgba(57, 255, 20, .18);
       }
+
       50% {
         opacity: 1;
         box-shadow: 0 0 6px #39ff14, 0 0 14px rgba(57, 255, 20, .75), inset 0 0 6px rgba(57, 255, 20, .5);
@@ -4196,7 +4199,7 @@
         flex-wrap: wrap;
       }
 
-      .header > .spacer-izq {
+      .header>.spacer-izq {
         display: none;
       }
 
@@ -6288,7 +6291,7 @@
         z-index: 2
       }
 
-      #user-info > span {
+      #user-info>span {
         display: none
       }
 
@@ -6494,6 +6497,16 @@
     ]);
     let comparT1 = null, comparT2 = null;
     let comparJ1 = null, comparJ2 = null;
+
+    function _nombreComparacion(nombre) {
+      return String(nombre || '').trim().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+    }
+
+    function _grupoMismoNombre(registros, seleccionado) {
+      const nombre = _nombreComparacion(seleccionado?.nombre);
+      return nombre ? registros.filter(registro => _nombreComparacion(registro.nombre) === nombre) : [];
+    }
 
     // ── Constantes ────────────────────────────────────────────────────────────────
     const POSICIONES = ['PT', 'DC', 'LI', 'LD', 'MCD', 'MDI', 'MDD', 'MC', 'MO',
@@ -7268,9 +7281,9 @@
         <aside class="jugador-posiciones-panel">
           <div class="jugador-posiciones-titulo">Posiciones compatibles</div>
           ${j.posicion
-            ? `${renderMiniCampoJugador(j)}
+          ? `${renderMiniCampoJugador(j)}
                <p class="jugador-posiciones-ayuda">Haz clic en una posición compatible para resaltarla u ocultarla.</p>`
-            : '<p class="jugador-posiciones-ayuda">Este jugador no tiene una posición principal asignada.</p>'}
+          : '<p class="jugador-posiciones-ayuda">Este jugador no tiene una posición principal asignada.</p>'}
         </aside>
         <div class="stats-3col">
           <div class="stats-col">
@@ -8033,13 +8046,13 @@
       const nombres = new Set();
       const ids = new Set();
       return [...(Array.isArray(jugadoresLista) ? jugadoresLista : [])].filter(jugador => {
-          const nombre = identidadJugadorPlantilla(jugador);
-          const id = idJugadorPlantilla(jugador);
-          if (nombres.has(nombre) || (id && ids.has(id))) return false;
-          nombres.add(nombre);
-          if (id) ids.add(id);
-          return true;
-        });
+        const nombre = identidadJugadorPlantilla(jugador);
+        const id = idJugadorPlantilla(jugador);
+        if (nombres.has(nombre) || (id && ids.has(id))) return false;
+        nombres.add(nombre);
+        if (id) ids.add(id);
+        return true;
+      });
     }
 
     function nombreCampoPlantilla(jugador, lista) {
@@ -8507,12 +8520,12 @@
             <div style="font-size:.77rem">
               <b style="color:var(--rojo)">${escaparHtml(item.position)}</b> · ${escaparHtml(item.reason)}
               ${item.suggestions.length
-                ? `<span style="color:var(--apagado)"> — sugeridos: ${item.suggestions.map(player =>
-                  `${escaparHtml(player.nombre || 'Sin nombre')} (${player.posicion || '—'}, OVR ${player.overall || '—'})`
-                ).join(' · ')}</span>`
-                : '<span style="color:var(--apagado)"> — no hay jugadores compatibles en la carpeta de este técnico.</span>'}
+          ? `<span style="color:var(--apagado)"> — sugeridos: ${item.suggestions.map(player =>
+            `${escaparHtml(player.nombre || 'Sin nombre')} (${player.posicion || '—'}, OVR ${player.overall || '—'})`
+          ).join(' · ')}</span>`
+          : '<span style="color:var(--apagado)"> — no hay jugadores compatibles en la carpeta de este técnico.</span>'}
             </div>`).join('')}</div>`
-            : '<div style="font-size:.77rem;color:var(--verde);margin-top:6px">Sin posiciones débiles detectadas en esta alineación.</div>'}
+          : '<div style="font-size:.77rem;color:var(--verde);margin-top:6px">Sin posiciones débiles detectadas en esta alineación.</div>'}
         </div>`;
       panel.classList.remove('oculto');
     }
@@ -8739,13 +8752,13 @@
           };
         });
         const safeDrawings = rawDrawings.map(drawing => ({
-            type: drawing.type,
-            color: drawing.color,
-            w: Math.max(1, Math.min(12, Number(drawing.w) || 3)),
-            ...(drawing.type === 'arrow'
-              ? { x1: Number(drawing.x1), y1: Number(drawing.y1), x2: Number(drawing.x2), y2: Number(drawing.y2) }
-              : { cx: Number(drawing.cx), cy: Number(drawing.cy), ...(drawing.type === 'circle' ? { r: Math.max(1, Number(drawing.r) || 1), dashed: Boolean(drawing.dashed) } : { s: Math.max(1, Number(drawing.s) || 20) }) })
-          }));
+          type: drawing.type,
+          color: drawing.color,
+          w: Math.max(1, Math.min(12, Number(drawing.w) || 3)),
+          ...(drawing.type === 'arrow'
+            ? { x1: Number(drawing.x1), y1: Number(drawing.y1), x2: Number(drawing.x2), y2: Number(drawing.y2) }
+            : { cx: Number(drawing.cx), cy: Number(drawing.cy), ...(drawing.type === 'circle' ? { r: Math.max(1, Number(drawing.r) || 1), dashed: Boolean(drawing.dashed) } : { s: Math.max(1, Number(drawing.s) || 20) }) })
+        }));
         const imported = {
           id: nuevoIdAlineacion(),
           nombre: `${String(share.alineacion.name || 'Alineación importada').trim().slice(0, 32)} (importada)`,
@@ -9687,6 +9700,24 @@
       const el = document.getElementById('comp-inner');
       if (!el) return;
 
+      // Modo grupo: si ambos técnicos tienen el mismo nombre, mostrar TODOS los de ese nombre
+      if (comparT1 && comparT2 && _nombreComparacion(comparT1.nombre) === _nombreComparacion(comparT2.nombre)) {
+        const grupoDuplicado = _grupoMismoNombre(tecnicos, comparT1);
+        if (grupoDuplicado.length > 1) {
+          el.innerHTML = _buildComparacionTecnicosGrupo(grupoDuplicado);
+          return;
+        }
+      }
+      // También activar si uno solo tiene duplicados (selección individual)
+      const grupoPorUno = [comparT1, comparT2]
+        .filter(Boolean)
+        .map(tecnico => _grupoMismoNombre(tecnicos, tecnico))
+        .find(grupo => grupo.length > 1);
+      if (grupoPorUno && !comparT2) {
+        el.innerHTML = _buildComparacionTecnicosGrupo(grupoPorUno);
+        return;
+      }
+
       const _gridTec = (slot, color) => `
         <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">Técnico ${slot}</div>
         <div id="comp-grid-container-${slot}" style="position:relative;">
@@ -9699,8 +9730,8 @@
           <div id="comp-grid-${slot}" style="display:none; position:absolute; top:100%; left:0; right:0;
             max-height:220px; overflow-y:auto; border:1px solid var(--borde); border-radius:8px;
             background:var(--oscuro); z-index:1000; margin-top:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-            ${tecnicos.map(t => `
-              <div data-search="${(t.nombre || '').toLowerCase()}" data-flex="true"
+            ${tecnicos.map((t, index) => `
+              <div data-search="${`${t.nombre || ''} ${t.edicion || ''} ${t.formacion || ''}`.toLowerCase()}" data-flex="true"
                 onclick="seleccionarComp(${slot}, '${t.id}')"
                 style="padding:8px;border-bottom:1px solid var(--borde);cursor:pointer;
                   display:flex;align-items:center;gap:10px;transition:all .2s ease"
@@ -9709,7 +9740,7 @@
                 ${t.imagen ? `<img src="${t.imagen}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;">` : '<div style="width:30px;height:30px;border-radius:50%;background:#444;flex-shrink:0;"></div>'}
                 <div style="flex:1">
                   <div style="font-weight:600;font-size:.85rem">${t.nombre || '—'}</div>
-                  <div style="font-size:.75rem;color:#888">${t.formacion || ''} ${t.fuerza_colectiva ? '· ⚡' + t.fuerza_colectiva : ''}</div>
+                  <div style="font-size:.75rem;color:#888">${t.formacion || ''} ${t.fuerza_colectiva ? '· ⚡' + t.fuerza_colectiva : ''}${t.edicion ? ' · ' + t.edicion : ''}${_grupoMismoNombre(tecnicos, t).length > 1 ? ` · Registro ${index + 1}` : ''}</div>
                 </div>
               </div>`).join('')}
           </div>
@@ -9732,6 +9763,78 @@
       if (slot === 1) comparT1 = tid ? tecnicos.find(t => t.id === tid) || null : null;
       else comparT2 = tid ? tecnicos.find(t => t.id === tid) || null : null;
       renderComparador();
+    }
+
+    function reiniciarComparadorTecnicos() {
+      comparT1 = null;
+      comparT2 = null;
+      renderComparador();
+    }
+
+    function _buildComparacionTecnicosGrupo(grupo) {
+      const colores = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
+      const label = escaparHtml(grupo[0].nombre || 'Sin nombre');
+      const filasEstilos = ESTILOS_DOM.map(([clave, nombre]) => {
+        const valores = grupo.map(tecnico => parseInt(tecnico[clave], 10) || 0);
+        if (!valores.some(Boolean)) return '';
+        return `<tr><th style="text-align:left;padding:7px;border-bottom:1px solid var(--borde)">${escaparHtml(nombre)}</th>
+          ${valores.map((valor, i) => `<td style="text-align:center;padding:7px;border-bottom:1px solid var(--borde);color:${colores[i % colores.length]};font-weight:700">${valor || '—'}</td>`).join('')}
+        </tr>`;
+      }).join('');
+
+      const tarjetas = grupo.map((tecnico, i) => {
+        const color = colores[i % colores.length];
+        const roster = _jPorCarpeta(tecnico.id);
+        const potenciadores = [tecnico.potenciador1, tecnico.potenciador2, tecnico.potenciador3]
+          .filter(potenciador => potenciador && potenciador !== '— Sin potenciador —');
+        return `<article class="comp-bloque" style="border-top:3px solid ${color}">
+          <div class="comp-bloque-body" style="text-align:center">
+            ${tecnico.imagen
+            ? `<img src="${escaparHtml(tecnico.imagen)}" alt="" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:2px solid ${color}">`
+            : ''}
+            <div style="font-weight:700;color:${color};margin-top:6px">${label}</div>
+            <div style="font-size:.78rem;color:var(--apagado)">${escaparHtml(tecnico.edicion || 'Edición no especificada')}</div>
+            <div style="font-size:.78rem;color:var(--apagado)">${escaparHtml(tecnico.formacion || 'Sin formación')}</div>
+            <div class="comp-fuerza" style="font-size:1.2rem;margin-top:4px">⚡${escaparHtml(tecnico.fuerza_colectiva || '—')}</div>
+            <div style="font-size:.78rem;color:var(--apagado);margin:4px 0 10px">${roster.length} jugadores</div>
+            <div style="font-size:.72rem;font-weight:700;margin-bottom:4px">Potenciadores</div>
+            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px">
+              ${potenciadores.length
+            ? potenciadores.map(potenciador => `<span class="comp-pot-badge">⚡${escaparHtml(potenciador)}</span>`).join('')
+            : '<span style="color:var(--apagado)">—</span>'}
+            </div>
+            <div style="font-size:.72rem;font-weight:700;margin-bottom:4px">Jugadores de su carpeta</div>
+            <div style="text-align:left">
+              ${roster.length
+            ? roster.map(jugador => `<div class="comp-jugador-fila" onclick="verDetalle('${jugador.id || jugador.jugador_id}','jugador')">
+                    <span class="comp-jug-pos">${escaparHtml(jugador.posicion || '?')}</span>
+                    <span class="comp-jug-nombre">${escaparHtml(jugador.nombre || '—')}</span>
+                    <span class="comp-jug-ovr">${escaparHtml(jugador.overall || '—')}</span>
+                  </div>`).join('')
+            : '<span style="font-size:.78rem;color:var(--apagado)">Sin jugadores</span>'}
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+
+      return `
+        <!-- Header del grupo de técnicos -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 12px">
+          <div><strong>Comparación de todos los técnicos llamados ${label}</strong><div style="font-size:.78rem;color:var(--apagado)">${grupo.length} registros con ese nombre</div></div>
+          <button class="btn-sm" onclick="reiniciarComparadorTecnicos()">Cambiar selección</button>
+        </div>
+        <!-- Tarjetas ARRIBA -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px">${tarjetas}</div>
+        ${filasEstilos ? `<div class="comp-bloque" style="margin-bottom:12px">
+          <div class="comp-bloque-titulo">🎮 Comparación de estilos de juego</div>
+          <div class="comp-bloque-body" style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:${Math.max(360, grupo.length * 100)}px">
+              <thead><tr><th style="text-align:left;padding:7px">Estilo</th>
+                ${grupo.map((tecnico, i) => `<th style="padding:7px;color:${colores[i % colores.length]}">${escaparHtml(tecnico.edicion || `Técnico ${i + 1}`)}</th>`).join('')}
+              </tr></thead><tbody>${filasEstilos}</tbody>
+            </table>
+          </div>
+        </div>` : ''}`;
     }
 
     function _miniCoach(t, color, playerCount) {
@@ -9967,7 +10070,10 @@
       if (jugadorDetalleRadar && document.getElementById('radar-canvas')) {
         drawRadar(jugadorDetalleRadar);
       }
-      if (comparJ1 && comparJ2) {
+      const grupoComparacion = _comparacionJugadoresDuplicadosActual();
+      if (grupoComparacion.length > 1) {
+        _dibujarRadarGrupoJugadores(grupoComparacion);
+      } else if (comparJ1 && comparJ2) {
         drawRadar2(comparJ1, '#60a5fa', 'radar-j1');
         drawRadar2(comparJ2, '#f472b6', 'radar-j2');
       }
@@ -10076,6 +10182,16 @@
       const el = document.getElementById('jcomp-inner');
       if (!el) return;
 
+      // Modo grupo: si ambos jugadores tienen el mismo nombre, mostrar TODOS los de ese nombre
+      if (comparJ1 && comparJ2 && _nombreComparacion(comparJ1.nombre) === _nombreComparacion(comparJ2.nombre)) {
+        const grupoDuplicado = _grupoMismoNombre(jugadores, comparJ1);
+        if (grupoDuplicado.length > 1) {
+          el.innerHTML = _buildComparacionJugadoresGrupo(grupoDuplicado);
+          _dibujarRadarGrupoJugadores(grupoDuplicado);
+          return;
+        }
+      }
+
       const _gridJug = (slot, color) => `
         <div style="font-weight:700;font-size:.9rem;margin-bottom:6px">Jugador ${slot}</div>
         <div id="jcomp-grid-container-${slot}" style="position:relative;">
@@ -10088,8 +10204,8 @@
           <div id="jcomp-grid-${slot}" style="display:none; position:absolute; top:100%; left:0; right:0;
             max-height:220px; overflow-y:auto; border:1px solid var(--borde); border-radius:8px;
             background:var(--oscuro); z-index:1000; margin-top:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
-            ${jugadores.map(j => `
-              <div data-search="${(j.nombre + ' ' + (j.posicion || '')).toLowerCase()}" data-flex="true"
+            ${jugadores.map((j, index) => `
+              <div data-search="${`${j.nombre || ''} ${j.posicion || ''} ${j.edicion || ''} ${j.equipo || ''}`.toLowerCase()}" data-flex="true"
                 onclick="selJComp(${slot},'${j.id}')"
                 style="padding:8px;border-bottom:1px solid var(--borde);cursor:pointer;
                   display:flex;align-items:center;gap:10px;transition:all .2s ease"
@@ -10100,23 +10216,32 @@
           : `<div style="width:30px;height:30px;border-radius:4px;background:var(--muted);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">🧑</div>`}
                 <div style="flex:1;overflow:hidden">
                   <div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.nombre || '—'}</div>
-                  <div style="font-size:.75rem;color:#888">${j.posicion || '?'} · OVR ${j.overall || '—'}</div>
+                  <div style="font-size:.75rem;color:#888">${j.posicion || '?'}${j.edicion ? ` · ${j.edicion}` : ''}${j.equipo ? ` · ${j.equipo}` : ''} · OVR ${j.overall || '—'}${_grupoMismoNombre(jugadores, j).length > 1 ? ` · Registro ${index + 1}` : ''}</div>
                 </div>
               </div>`).join('')}
           </div>
         </div>`;
 
-      el.innerHTML = `
-    <div class="jcomp-sel">
-      <div class="jcomp-box ${comparJ1 ? 'sel-1' : ''}">
-        ${comparJ1 ? _miniJug(comparJ1, '#60a5fa', 1) : _gridJug(1, '#60a5fa')}
-      </div>
-      <div class="jcomp-vs">VS</div>
-      <div class="jcomp-box ${comparJ2 ? 'sel-2' : ''}">
-        ${comparJ2 ? _miniJug(comparJ2, '#f472b6', 2) : _gridJug(2, '#f472b6')}
-      </div>
-    </div>
-    ${comparJ1 && comparJ2 ? _buildJComp() : '<div class="comp-placeholder"><div class="icon">👥</div><p>Selecciona dos jugadores para comparar</p></div>'}`;
+      // Si ambos seleccionados, barra compacta de cambio + contenido completo
+      const barraSeleccion = comparJ1 && comparJ2
+        ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--oscuro);border-radius:10px;border:1px solid var(--borde)">
+            <button onclick="selJComp(1,'')" style="background:none;border:1px solid #60a5fa44;border-radius:6px;color:#60a5fa;cursor:pointer;font-size:.75rem;padding:4px 10px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--rojo)';this.style.color='var(--rojo)'" onmouseout="this.style.borderColor='#60a5fa44';this.style.color='#60a5fa'">✕ ${comparJ1.nombre}</button>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--oro);margin:0 4px">VS</div>
+            <button onclick="selJComp(2,'')" style="background:none;border:1px solid #f472b644;border-radius:6px;color:#f472b6;cursor:pointer;font-size:.75rem;padding:4px 10px;white-space:nowrap;transition:all .15s" onmouseover="this.style.borderColor='var(--rojo)';this.style.color='var(--rojo)'" onmouseout="this.style.borderColor='#f472b644';this.style.color='#f472b6'">✕ ${comparJ2.nombre}</button>
+            <span style="margin-left:auto;font-size:.72rem;color:var(--apagado)">Haz clic en un jugador para cambiarlo</span>
+          </div>`
+        : `<div class="jcomp-sel">
+            <div class="jcomp-box ${comparJ1 ? 'sel-1' : ''}">
+              ${comparJ1 ? _miniJug(comparJ1, '#60a5fa', 1) : _gridJug(1, '#60a5fa')}
+            </div>
+            <div class="jcomp-vs">VS</div>
+            <div class="jcomp-box ${comparJ2 ? 'sel-2' : ''}">
+              ${comparJ2 ? _miniJug(comparJ2, '#f472b6', 2) : _gridJug(2, '#f472b6')}
+            </div>
+          </div>`;
+
+      el.innerHTML = barraSeleccion +
+        (comparJ1 && comparJ2 ? _buildJComp() : '<div class="comp-placeholder"><div class="icon">👥</div><p>Selecciona dos jugadores para comparar</p></div>');
     }
 
     function selJComp(slot, id) {
@@ -10126,6 +10251,120 @@
       if (comparJ1 && comparJ2) {
         setTimeout(() => { drawRadar2(comparJ1, '#60a5fa', 'radar-j1'); drawRadar2(comparJ2, '#f472b6', 'radar-j2'); }, 50);
       }
+    }
+
+    function reiniciarComparadorJugadores() {
+      comparJ1 = null;
+      comparJ2 = null;
+      renderComparadorJugadores();
+    }
+
+    function _comparacionJugadoresDuplicadosActual() {
+      if (!comparJ1 || !comparJ2 ||
+        _nombreComparacion(comparJ1.nombre) !== _nombreComparacion(comparJ2.nombre)) return [];
+      return _grupoMismoNombre(jugadores, comparJ1);
+    }
+
+    function _dibujarRadarGrupoJugadores(grupo) {
+      grupo.forEach((jugador, i) => {
+        const color = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'][i % 6];
+        drawRadar2(jugador, color, `radar-jgrupo-${i}`);
+      });
+    }
+
+    function _mejorTecnicoJugador(jugador) {
+      const enCarpeta = carpetas.filter(carpeta => carpeta.jugador_id === jugador.id);
+      if (!enCarpeta.length) return '<span style="color:var(--apagado);font-size:.8rem">Sin técnico asignado</span>';
+      const tecnicosOrdenados = enCarpeta
+        .map(carpeta => ({ carpeta, tecnico: tecnicos.find(tecnico => tecnico.id === carpeta.tecnico_id) }))
+        .filter(item => item.tecnico)
+        .sort((a, b) => (parseInt(b.carpeta.overall) || 0) - (parseInt(a.carpeta.overall) || 0));
+      const mejor = tecnicosOrdenados[0];
+      if (!mejor) return '<span style="color:var(--apagado)">—</span>';
+      return `<div style="display:flex;align-items:center;gap:6px;background:var(--oscuro);
+        border:1px solid var(--borde);border-radius:8px;padding:7px 10px;margin-top:4px">
+        ${mejor.tecnico.imagen
+          ? `<img src="${escaparHtml(mejor.tecnico.imagen)}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover">`
+          : '<span>🧑‍💼</span>'}
+        <span style="font-weight:700;font-size:.82rem">${escaparHtml(mejor.tecnico.nombre || '—')}</span>
+        <span class="badge badge-oro" style="margin-left:auto">OVR ${escaparHtml(mejor.carpeta.overall || jugador.overall || '—')}</span>
+      </div>
+        ${tecnicosOrdenados.slice(1).map(({ carpeta, tecnico }) => `<div style="display:flex;align-items:center;gap:6px;padding:4px 10px;
+          font-size:.78rem;color:var(--apagado)">
+          ${tecnico.imagen
+              ? `<img src="${escaparHtml(tecnico.imagen)}" alt="" style="width:20px;height:20px;border-radius:4px;object-fit:cover">`
+              : '<span>🧑‍💼</span>'}
+          <span>${escaparHtml(tecnico.nombre || '—')}</span>
+          <span style="margin-left:auto;font-weight:700">OVR ${escaparHtml(carpeta.overall || jugador.overall || '—')}</span>
+        </div>`).join('')}`;
+    }
+
+    function _buildComparacionJugadoresGrupo(grupo) {
+      const colores = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
+      const nombre = escaparHtml(grupo[0].nombre || 'Sin nombre');
+      const categorias = [['⚔️ Ataque', SA], ['🛡️ Defensa', SD], ['⚡ Fuerza', SF]];
+      const estadisticasGanadas = grupo.map(() => 0);
+      let estadisticasEmpatadas = 0;
+      const filas = categorias.map(([titulo, atributos]) => `
+        <tr><th colspan="${grupo.length + 1}" style="text-align:left;padding:8px;background:var(--oscuro);color:var(--oro)">${titulo}</th></tr>
+        ${atributos.map(([clave, etiqueta]) => {
+        const valores = grupo.map(jugador => parseInt(jugador[clave], 10) || 0);
+        if (!valores.some(Boolean)) return '';
+        const maximo = Math.max(...valores);
+        const mejores = valores.map((valor, i) => valor === maximo ? i : -1).filter(i => i >= 0);
+        if (mejores.length === 1) estadisticasGanadas[mejores[0]]++;
+        else estadisticasEmpatadas++;
+        return `<tr><th style="text-align:left;padding:6px;border-bottom:1px solid var(--borde);font-weight:500">${escaparHtml(etiqueta)}</th>
+            ${valores.map((valor, i) => `<td style="text-align:center;padding:6px;border-bottom:1px solid var(--borde);color:${colores[i % colores.length]};font-weight:700">${valor || '—'}${mejores.includes(i) ? ' 🏆' : ''}</td>`).join('')}
+          </tr>`;
+      }).join('')}`).join('');
+      const tarjetas = grupo.map((jugador, i) => {
+        const color = colores[i % colores.length];
+        return `<article class="comp-bloque" style="border-top:3px solid ${color}">
+          <div class="comp-bloque-body" style="text-align:center">
+            ${jugador.imagen ? `<img src="${escaparHtml(jugador.imagen)}" alt="" style="width:64px;height:76px;object-fit:cover;object-position:top;border-radius:8px;border:2px solid ${color};display:block;margin:0 auto 6px">` : ''}
+            <div style="font-weight:700;color:${color};margin-top:6px">${nombre}</div>
+            <div style="font-size:.78rem;color:var(--apagado)">${escaparHtml(jugador.edicion || 'Edición no especificada')}</div>
+            <div style="font-size:.78rem;color:var(--apagado)">${escaparHtml(jugador.posicion || 'Sin posición')}${jugador.equipo ? ` · ${escaparHtml(jugador.equipo)}` : ''}</div>
+            <div class="comp-fuerza" style="font-size:1.2rem;margin:4px 0">⚡${escaparHtml(jugador.overall || '—')}</div>
+            <canvas id="radar-jgrupo-${i}" width="200" height="200" style="max-width:100%"></canvas>
+            <div style="font-weight:700;color:${color};margin:8px 0 4px">📊 ${estadisticasGanadas[i]} estadísticas ganadas</div>
+            <div style="font-size:.72rem;color:var(--apagado);margin-bottom:10px">${estadisticasEmpatadas} estadísticas empatadas</div>
+            <div style="font-size:.72rem;font-weight:700;text-align:left;margin-bottom:4px">🧑‍💼 Rinde mejor con</div>
+            <div style="text-align:left">${_mejorTecnicoJugador(jugador)}</div>
+          </div>
+        </article>`;
+      }).join('');
+      const ganador = Math.max(...estadisticasGanadas);
+      const ganadores = estadisticasGanadas.map((victorias, i) => victorias === ganador ? i : -1).filter(i => i >= 0);
+      const resumenGanador = ganadores.length === 1
+        ? `🏆 ${escaparHtml(grupo[ganadores[0]].nombre)} (${escaparHtml(grupo[ganadores[0]].edicion || `Jugador ${ganadores[0] + 1}`)}) lidera en más estadísticas`
+        : '🤝 Los jugadores están igualados en estadísticas ganadas';
+
+      return `
+        <!-- Header del grupo -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 12px">
+          <div><strong>Comparación de todos los jugadores llamados ${nombre}</strong><div style="font-size:.78rem;color:var(--apagado)">${grupo.length} registros con ese nombre</div></div>
+          <button class="btn-sm" onclick="reiniciarComparadorJugadores()">Cambiar selección</button>
+        </div>
+        <!-- Tarjetas de jugadores ARRIBA -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px">${tarjetas}</div>
+        <!-- Resumen ganador -->
+        <div class="comp-bloque" style="margin-bottom:12px;text-align:center">
+          <div class="comp-bloque-titulo">📈 Estadísticas ganadas</div>
+          <div class="comp-bloque-body">${resumenGanador} · ${estadisticasEmpatadas} empates</div>
+        </div>
+        <!-- Tabla comparativa -->
+        <div class="comp-bloque" style="margin-bottom:12px">
+          <div class="comp-bloque-titulo">📊 Comparación de atributos</div>
+          <div class="comp-bloque-body" style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;min-width:${Math.max(420, grupo.length * 100)}px">
+              <thead><tr><th style="text-align:left;padding:7px">Atributo</th>
+                ${grupo.map((jugador, i) => `<th style="padding:7px;color:${colores[i % colores.length]}">${escaparHtml(jugador.edicion || `Jugador ${i + 1}`)}<br><span style="font-size:.68rem">${escaparHtml(jugador.posicion || '')} · OVR ${escaparHtml(jugador.overall || '—')}</span></th>`).join('')}
+              </tr></thead><tbody>${filas}</tbody>
+            </table>
+          </div>
+        </div>`;
     }
 
     function _miniJug(j, color, slot) {
@@ -10171,30 +10410,6 @@
     <div class="jcomp-seccion">${titulo}</div>
     ${arr.map(([k, n]) => statRow(k, n)).join('')}`;
 
-      // Best coach per player
-      const bestCoach = (j) => {
-        const enCarp = carpetas.filter(c => c.jugador_id === j.id);
-        if (!enCarp.length) return '<span style="color:var(--apagado);font-size:.8rem">Sin técnico asignado</span>';
-        const sorted = enCarp.map(c => ({ c, t: tecnicos.find(t => t.id === c.tecnico_id) }))
-          .filter(x => x.t).sort((a, b) => (parseInt(b.c.overall) || 0) - (parseInt(a.c.overall) || 0));
-        if (!sorted.length) return '<span style="color:var(--apagado)">—</span>';
-        const best = sorted[0];
-        return `<div style="display:flex;align-items:center;gap:6px;background:var(--oscuro);
-      border:1px solid var(--borde);border-radius:8px;padding:7px 10px;margin-top:4px">
-      ${best.t.imagen ? `<img src="${best.t.imagen}" style="width:28px;height:28px;border-radius:6px;object-fit:cover">` :
-            '<span>🧑‍💼</span>'}
-      <span style="font-weight:700;font-size:.82rem">${best.t.nombre}</span>
-      <span class="badge badge-oro" style="margin-left:auto">OVR ${best.c.overall || j.overall || '—'}</span>
-    </div>
-    ${sorted.slice(1).map(x => `<div style="display:flex;align-items:center;gap:6px;padding:4px 10px;
-      font-size:.78rem;color:var(--apagado)">
-      ${x.t.imagen ? `<img src="${x.t.imagen}" style="width:20px;height:20px;border-radius:4px;object-fit:cover">` :
-                '<span>🧑‍💼</span>'}
-      <span>${x.t.nombre}</span>
-      <span style="margin-left:auto;font-weight:700">OVR ${x.c.overall || j.overall || '—'}</span>
-    </div>`).join('')}`;
-      };
-
       // Build stats first to count wins
       const statsHtml =
         seccCol(SA, '⚔️ Ataque') +
@@ -10202,6 +10417,31 @@
         seccCol(SF, '⚡ Fuerza');
 
       return `
+    <!-- Encabezado con cartas de jugadores -->
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:14px">
+      <div style="background:linear-gradient(135deg,rgba(14,26,48,.7),var(--card));
+        border:1px solid #60a5fa44;border-radius:12px;padding:12px;text-align:center">
+        ${j1.imagen
+          ? `<img src="${j1.imagen}" style="width:64px;height:76px;object-fit:cover;object-position:top;border-radius:8px;border:2px solid #60a5fa;display:block;margin:0 auto 6px">`
+          : `<div style="width:64px;height:76px;border-radius:8px;background:var(--oscuro);border:2px solid #60a5fa44;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 6px">🧑</div>`}
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#60a5fa">${j1.nombre}</div>
+        <div style="font-size:.75rem;color:var(--apagado)">${j1.posicion || ''}${j1.edicion ? ' · ' + j1.edicion : ''}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--oro);margin-top:4px">⚡${j1.overall || '—'}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--oro)">VS</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(26,14,32,.7),var(--card));
+        border:1px solid #f472b644;border-radius:12px;padding:12px;text-align:center">
+        ${j2.imagen
+          ? `<img src="${j2.imagen}" style="width:64px;height:76px;object-fit:cover;object-position:top;border-radius:8px;border:2px solid #f472b6;display:block;margin:0 auto 6px">`
+          : `<div style="width:64px;height:76px;border-radius:8px;background:var(--oscuro);border:2px solid #f472b644;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 6px">🧑</div>`}
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#f472b6">${j2.nombre}</div>
+        <div style="font-size:.75rem;color:var(--apagado)">${j2.posicion || ''}${j2.edicion ? ' · ' + j2.edicion : ''}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--oro);margin-top:4px">⚡${j2.overall || '—'}</div>
+      </div>
+    </div>
+
     <!-- Radar side by side -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
       <div style="background:var(--card);border:1px solid #60a5fa33;border-radius:12px;padding:10px;text-align:center">
@@ -10251,14 +10491,14 @@
           <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:#60a5fa;margin-bottom:6px">
             🧑‍💼 ${j1.nombre.split(' ')[0]} rinde mejor con
           </div>
-          ${bestCoach(j1)}
+          ${_mejorTecnicoJugador(j1)}
         </div>
         <!-- Mejor técnico J2 -->
         <div style="background:var(--card);border:1px solid #f472b633;border-radius:12px;padding:12px">
           <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;color:#f472b6;margin-bottom:6px">
             🧑‍💼 ${j2.nombre.split(' ')[0]} rinde mejor con
           </div>
-          ${bestCoach(j2)}
+          ${_mejorTecnicoJugador(j2)}
         </div>
       </div>
     </div>`;
@@ -11645,9 +11885,11 @@
         </div>
       </div>
 
-      <section style="margin-top:18px;padding:14px;background:var(--oscuro);border:1px solid var(--borde);border-radius:12px">
+      <section
+        style="margin-top:18px;padding:14px;background:var(--oscuro);border:1px solid var(--borde);border-radius:12px">
         <div style="font-weight:800;color:var(--oro);margin-bottom:5px">🕘 Versiones de mi equipo</div>
-        <div style="font-size:.78rem;color:var(--apagado);margin-bottom:10px">Guarda un punto de restauración antes de hacer cambios grandes y compara las versiones después.</div>
+        <div style="font-size:.78rem;color:var(--apagado);margin-bottom:10px">Guarda un punto de restauración antes de
+          hacer cambios grandes y compara las versiones después.</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input id="version-equipo-nombre" maxlength="120" placeholder="Ej. Antes de cambiar formación"
             style="flex:1;min-width:180px;background:var(--card);border:1px solid var(--borde);border-radius:8px;color:var(--texto);padding:9px 11px">

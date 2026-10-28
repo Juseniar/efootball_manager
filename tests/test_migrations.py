@@ -31,8 +31,8 @@ class DatabaseMigrationTests(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_distinct_histories_with_the_same_id_are_preserved_and_rerunnable(self):
-        source_session = sessionmaker(bind=self.source_engine)()
-        target_session = sessionmaker(bind=self.target_engine)()
+        source_session = sessionmaker(self.source_engine)()
+        target_session = sessionmaker(self.target_engine)()
         try:
             source_session.add(
                 User(username="manager", password="hash", nombre="Manager")
@@ -80,7 +80,7 @@ class DatabaseMigrationTests(unittest.TestCase):
             migrate_databases(self.source_engine, self.target_engine), 0
         )
 
-        check_session = sessionmaker(bind=self.target_engine)()
+        check_session = sessionmaker(self.target_engine)()
         try:
             snapshots = check_session.scalars(
                 select(History.snapshot).order_by(History.id)
@@ -93,8 +93,8 @@ class DatabaseMigrationTests(unittest.TestCase):
         )
 
     def test_matching_history_with_a_different_id_is_not_duplicated(self):
-        source_session = sessionmaker(bind=self.source_engine)()
-        target_session = sessionmaker(bind=self.target_engine)()
+        source_session = sessionmaker(self.source_engine)()
+        target_session = sessionmaker(self.target_engine)()
         try:
             source_session.add(
                 History(
@@ -137,7 +137,7 @@ class DatabaseMigrationTests(unittest.TestCase):
             0,
         )
 
-        check_session = sessionmaker(bind=self.target_engine)()
+        check_session = sessionmaker(self.target_engine)()
         try:
             self.assertEqual(check_session.query(History).count(), 1)
         finally:
@@ -197,7 +197,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         json_engine = create_engine(
             f"sqlite:///{(self.root / 'json.db').as_posix()}"
         )
-        check_session = sessionmaker(bind=json_engine)()
+        check_session = sessionmaker(json_engine)()
         try:
             self.assertEqual(check_session.query(User).count(), 2)
             self.assertEqual(check_session.query(Player).count(), 2)
@@ -237,7 +237,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         target_url = f"sqlite:///{(self.root / 'scorer-target.db').as_posix()}"
         target_engine = create_engine(target_url)
         db.metadata.create_all(target_engine)
-        target_session = sessionmaker(bind=target_engine)()
+        target_session = sessionmaker(target_engine)()
         try:
             target_session.add(
                 User(
@@ -281,7 +281,7 @@ class DatabaseMigrationTests(unittest.TestCase):
                 os.environ["DATABASE_URL"] = previous_database_url
 
         check_engine = create_engine(target_url)
-        check_session = sessionmaker(bind=check_engine)()
+        check_session = sessionmaker(check_engine)()
         try:
             tracker = check_session.get(GoalTracker, "manager")
             self.assertEqual(json.loads(tracker.data), scorers)
@@ -290,7 +290,7 @@ class DatabaseMigrationTests(unittest.TestCase):
             check_engine.dispose()
 
     def test_conflicting_player_data_is_archived_without_overwriting_destination(self):
-        source_session = sessionmaker(bind=self.source_engine)()
+        source_session = sessionmaker(self.source_engine)()
         try:
             source_session.add(
                 User(username="manager", password="hash", nombre="Manager")
@@ -306,7 +306,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         finally:
             source_session.close()
 
-        target_session = sessionmaker(bind=self.target_engine)()
+        target_session = sessionmaker(self.target_engine)()
         try:
             target_session.add(
                 User(username="manager", password="hash", nombre="Manager")
@@ -331,7 +331,7 @@ class DatabaseMigrationTests(unittest.TestCase):
             1,
         )
 
-        check_session = sessionmaker(bind=self.target_engine)()
+        check_session = sessionmaker(self.target_engine)()
         try:
             player = check_session.get(Player, ("manager", "player-1"))
             self.assertEqual(player.data, '{"id":"player-1","overall":90}')
