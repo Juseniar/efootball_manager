@@ -19,6 +19,8 @@ def dispatch_methods(**handlers):
 urlpatterns = [
     path("", views.index, name="index"),
     path("login", views.login_page, name="login"),
+    path("favicon.png", views.favicon, name="favicon-png"),
+    path("favicon.ico", views.favicon, name="favicon-ico"),
     path("sw.js", views.service_worker, name="service-worker"),
     path("manifest.json", views.manifest, name="manifest"),
     path("goleadores.js", views.goleadores_js, name="goleadores-js"),
@@ -91,6 +93,11 @@ urlpatterns = [
         "api/goleadores",
         dispatch_methods(GET=views.get_goleadores, POST=views.post_goleadores),
         name="goleadores",
+    ),
+    path(
+        "api/monedas",
+        dispatch_methods(GET=views.get_monedas, POST=views.post_monedas),
+        name="monedas",
     ),
     path("api/backup", views.api_backup, name="backup"),
     path("api/versions", views.api_versions, name="versions"),

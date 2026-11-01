@@ -679,6 +679,19 @@ def manifest(request):
 
 
 @require_GET
+def favicon(request):
+    if request.path.endswith(".ico"):
+        return _file_response(
+            ROOT / "imagenes" / "favicon.ico",
+            "image/x-icon",
+        )
+    return _file_response(
+        ROOT / "imagenes" / "favicon.png",
+        "image/png",
+    )
+
+
+@require_GET
 def goleadores_js(request):
     return _file_response(ROOT / "goleadores.js", "application/javascript")
 
@@ -1307,6 +1320,50 @@ def post_goleadores(request):
         )
     db.session.commit()
     return json_response({"ok": True, "data": data})
+
+
+@require_GET
+def get_monedas(request):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    tracker = GoalTracker.query.filter_by(username=username).first()
+    monedas = 731
+    if tracker:
+        datos = tracker.parsed_data
+        try:
+            monedas = max(0, int(datos.get("monedas", 731) or 0))
+        except (TypeError, ValueError):
+            monedas = 731
+    return json_response({"monedas": monedas})
+
+
+@csrf_exempt
+@require_POST
+def post_monedas(request):
+    username, error = authenticated_user(request)
+    if error:
+        return error
+    data, error = json_body(request)
+    if error:
+        return error
+    try:
+        monedas = max(0, int(data.get("monedas", 0)))
+    except (TypeError, ValueError):
+        return json_error("Cantidad de monedas inválida", 400)
+    tracker = GoalTracker.query.filter_by(username=username).first()
+    if tracker:
+        datos = tracker.parsed_data
+        datos["monedas"] = monedas
+        tracker.data = json.dumps(datos, ensure_ascii=False)
+    else:
+        tracker = GoalTracker(
+            username=username,
+            data=json.dumps({"monedas": monedas}, ensure_ascii=False),
+        )
+        db.session.add(tracker)
+    db.session.commit()
+    return json_response({"ok": True, "monedas": monedas})
 
 
 def es_admin(request):

@@ -88,11 +88,42 @@ class DjangoBackendTests(unittest.TestCase):
         login_page = self.client.get("/login")
         self.assertEqual(login_page.status_code, 200)
         login_page.close()
+        favicon_png = self.client.get("/favicon.png")
+        self.assertEqual(favicon_png.status_code, 200)
+        self.assertEqual(favicon_png["Content-Type"], "image/png")
+        favicon_png.close()
+        favicon_ico = self.client.get("/favicon.ico")
+        self.assertEqual(favicon_ico.status_code, 200)
+        self.assertEqual(favicon_ico["Content-Type"], "image/x-icon")
+        favicon_ico.close()
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"ok": True})
         self.assertEqual(response["X-Application-Framework"], "Django")
         self.assertIn("no-store", response["Cache-Control"])
+
+    def test_coin_balance_defaults_saves_and_never_goes_negative(self):
+        self.register()
+        response = self.client.get("/api/monedas")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"monedas": 731})
+
+        response = self.client.post(
+            "/api/monedas",
+            data=json.dumps({"monedas": 840}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True, "monedas": 840})
+        self.assertEqual(self.client.get("/api/monedas").json(), {"monedas": 840})
+
+        response = self.client.post(
+            "/api/monedas",
+            data=json.dumps({"monedas": -50}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get("/api/monedas").json(), {"monedas": 0})
 
     def test_login_cards_endpoint_lists_only_public_card_images(self):
         manifest_response = self.client.get("/imagenes/jugadores/cards.json")

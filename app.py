@@ -136,6 +136,13 @@ def health():
     db.session.execute(text("SELECT 1"))
     return jsonify({"ok": True})
 
+@app.route("/favicon.png")
+@app.route("/favicon.ico")
+def favicon():
+    if request.path.endswith(".ico"):
+        return send_file("imagenes/favicon.ico", mimetype="image/x-icon")
+    return send_file("imagenes/favicon.png", mimetype="image/png")
+
 # ── Auth routes ───────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
@@ -552,6 +559,42 @@ def post_goleadores():
         db.session.add(gt)
     db.session.commit()
     return jsonify({"ok": True, "data": data})
+
+@app.route("/api/monedas", methods=["GET"])
+def get_monedas():
+    u, err, code = check_auth()
+    if err:
+        return err, code
+    gt = GoalTracker.query.filter_by(username=u).first()
+    monedas = 731
+    if gt:
+        datos = gt.parsed_data
+        monedas = max(0, int(datos.get("monedas", 731) or 0))
+    return jsonify({"monedas": monedas})
+
+@app.route("/api/monedas", methods=["POST"])
+def post_monedas():
+    u, err, code = check_auth()
+    if err:
+        return err, code
+    data = request.json or {}
+    try:
+        monedas = max(0, int(data.get("monedas", 0)))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Cantidad de monedas inválida"}), 400
+    gt = GoalTracker.query.filter_by(username=u).first()
+    if gt:
+        datos = gt.parsed_data
+        datos["monedas"] = monedas
+        gt.data = json.dumps(datos, ensure_ascii=False)
+    else:
+        gt = GoalTracker(
+            username=u,
+            data=json.dumps({"monedas": monedas}, ensure_ascii=False),
+        )
+        db.session.add(gt)
+    db.session.commit()
+    return jsonify({"ok": True, "monedas": monedas})
 
 # ── Panel Admin ──────────────────────────────────────────────────────────────
 ADMIN_USERS = {"admin"}

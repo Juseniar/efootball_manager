@@ -11,7 +11,9 @@
   <meta name="apple-mobile-web-app-title" content="eFootball Manager">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>eFootball Manager</title>
-  <link rel="icon" id="favicon" href="" type="image/png">
+  <link rel="icon" id="favicon" href="/favicon.png?v=1" type="image/png" sizes="320x320">
+  <link rel="shortcut icon" href="/favicon.ico?v=1" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/favicon.png?v=1" sizes="320x320">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/goleadores.css">
@@ -5899,6 +5901,71 @@
       margin-top: 20px;
     }
 
+    .boton-monedas {
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 10px 5px 6px;
+      border: 1px solid var(--borde);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      cursor: pointer;
+      font-family: Inter, sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+      transition: 0.15s ease;
+    }
+
+    .boton-monedas:hover {
+      border-color: var(--oro);
+      background: rgba(240, 180, 41, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .boton-monedas img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .modal-monedas {
+      max-width: 380px !important;
+    }
+
+    .monedas-editor {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 18px 0;
+    }
+
+    .monedas-editor img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .monedas-editor input {
+      width: 160px;
+      height: 48px;
+      text-align: center;
+      border-radius: 10px;
+      border: 1px solid var(--borde);
+      background: var(--oscuro);
+      color: #fff;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.65rem;
+    }
+
+    .monedas-acciones {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
     /* Botón cerrar sesión en header */
     #btn-logout {
       font-size: .72rem;
@@ -6360,6 +6427,10 @@
     <div style="width:1px;height:22px;background:var(--borde);flex-shrink:0"></div>
     <!-- Usuario + Salir -->
     <div id="user-info" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button id="boton-monedas" class="boton-monedas" onclick="abrirModalMonedas()" title="Editar monedas">
+        <img src="/imagenes/moneda.png" alt="Monedas">
+        <span id="cantidad-monedas">731</span>
+      </button>
       <span id="user-nombre" style="font-size:.75rem;font-weight:600;color:var(--apagado)"></span>
       <button class="modo-toggle" onclick="cerrarSesion()"
         style="font-size:.75rem;padding:4px 10px;font-family:Inter,sans-serif;font-weight:700;color:var(--rojo)">🚪
@@ -6793,6 +6864,105 @@
       if (!escudosCache.length) return null;
       return escudosCache[new Date().getDate() % escudosCache.length];
     }
+
+    let monedasActuales = 731;
+
+    function actualizarCantidadMonedas(cantidad) {
+      monedasActuales = Math.max(0, parseInt(cantidad, 10) || 0);
+      const elemento = document.getElementById('cantidad-monedas');
+      if (elemento) elemento.textContent = monedasActuales.toLocaleString('es-ES');
+      return monedasActuales;
+    }
+
+    async function cargarMonedas() {
+      try {
+        const response = await fetch('/api/monedas', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          actualizarCantidadMonedas(data.monedas);
+        }
+      } catch (error) {
+        console.warn('No se pudieron cargar las monedas:', error);
+      }
+    }
+
+    async function guardarMonedas(cantidad) {
+      const cantidadAnterior = monedasActuales;
+      const monedas = actualizarCantidadMonedas(cantidad);
+      try {
+        const response = await fetch('/api/monedas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ monedas })
+        });
+        if (!response.ok) throw new Error('No se pudo guardar');
+        const data = await response.json();
+        actualizarCantidadMonedas(data.monedas);
+        return true;
+      } catch (error) {
+        console.error(error);
+        actualizarCantidadMonedas(cantidadAnterior);
+        alert('No se pudieron guardar las monedas');
+        return false;
+      }
+    }
+
+    window.abrirModalMonedas = function () {
+      const existente = document.getElementById('ov-monedas');
+      if (existente) existente.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'gol-modal-backdrop';
+      overlay.id = 'ov-monedas';
+      overlay.innerHTML = `
+        <div class="gol-modal-card modal-monedas">
+          <div class="gol-modal-header">
+            <h3>Mis monedas</h3>
+            <button class="gol-modal-close" onclick="cerrarModalMonedas()">✕</button>
+          </div>
+          <div class="gol-modal-body">
+            <div class="monedas-editor">
+              <img src="/imagenes/moneda.png" alt="Moneda">
+              <input id="input-monedas" type="number" min="0" step="1" value="${monedasActuales}">
+            </div>
+            <div class="monedas-acciones">
+              <button class="btn-gol-sec" onclick="ajustarMonedas(-100)">−100</button>
+              <button class="btn-gol-sec" onclick="ajustarMonedas(100)">+100</button>
+              <button class="btn-gol-sec" onclick="ajustarMonedas(-10)">−10</button>
+              <button class="btn-gol-sec" onclick="ajustarMonedas(10)">+10</button>
+              <button class="btn-gol-sec" onclick="ajustarMonedas(-1)">−1</button>
+              <button class="btn-gol-sec" onclick="ajustarMonedas(1)">+1</button>
+            </div>
+          </div>
+          <div class="gol-modal-footer">
+            <button class="btn-gol-sec" onclick="cerrarModalMonedas()">Cancelar</button>
+            <button class="btn-gol-primary" onclick="guardarModalMonedas()">Guardar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      const input = document.getElementById('input-monedas');
+      input.focus();
+      input.select();
+    };
+
+    window.ajustarMonedas = function (cantidad) {
+      const input = document.getElementById('input-monedas');
+      if (!input) return;
+      input.value = Math.max(0, (parseInt(input.value, 10) || 0) + cantidad);
+    };
+
+    window.cerrarModalMonedas = function () {
+      const overlay = document.getElementById('ov-monedas');
+      if (overlay) overlay.remove();
+    };
+
+    window.guardarModalMonedas = async function () {
+      const input = document.getElementById('input-monedas');
+      if (!input) return;
+      const guardado = await guardarMonedas(input.value);
+      if (guardado) cerrarModalMonedas();
+    };
 
     function setFavicon(url) {
       let link = document.getElementById('favicon') || document.querySelector('link[rel="icon"]');
@@ -9683,6 +9853,7 @@
     async function initBranding() {
       await cargarEscudos();
       const esc = escudoDelDia();
+      setFavicon('/favicon.png?v=1');
       const logoEl = document.getElementById('logo-header') || document.querySelector('.logo');
       if (esc) {
         setFavicon(esc.url);
@@ -11202,6 +11373,7 @@
       });
 
       await cargar();
+      await cargarMonedas();
       if (TABS_VALIDAS.has(tabGuardada) && tabGuardada !== 'inicio') {
         cambiarTab(tabGuardada);
       }
