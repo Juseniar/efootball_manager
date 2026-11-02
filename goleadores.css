@@ -832,7 +832,6 @@
   margin: 0;
   color: var(--apagado);
 }
-
 /* ── Badge Prominente: Le faltan X ── */
 .gol-faltan-badge {
   display: flex;

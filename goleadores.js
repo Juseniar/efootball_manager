@@ -1540,6 +1540,8 @@
     `;
 
     document.body.appendChild(overlay);
+    window._scActivos   = {};
+    window._scMarcador  = { mi: 0, rival: 0 };
   };
 
   // ── MODAL 3: Editar Goles Individuales ──────────────────────────────────────
